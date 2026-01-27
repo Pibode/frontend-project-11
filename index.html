@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RSS агрегатор</title>
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="text-center mb-4">RSS агрегатор</h1>
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+        <form id="rss-form" class="mb-4">
+          <div class="mb-3">
+            <label for="url-input" class="form-label">RSS ссылка</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="url-input" 
+              placeholder="https://example.com/rss"
+              required
+            >
+            <div class="form-text">
+              Введите URL RSS-ленты
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">
+            Добавить
+          </button>
+        </form>
+        <div id="feeds" class="mt-4">
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
