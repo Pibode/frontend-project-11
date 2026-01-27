@@ -2,7 +2,7 @@
 [![Actions Status](https://github.com/Pibode/frontend-project-11/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/Pibode/frontend-project-11/actions)
 ## Ссылка на деплой
 
-Проект размещен на Vercel: [https://frontend-project-11.vercel.app](https://frontend-project-11.vercel.app)
+Проект размещен на Vercel: [https://frontend-project-11-six-coral.vercel.app](https://frontend-project-11-six-coral.vercel.app)
 
 ### Локальный запуск
 1. Клонируй репозиторий
