@@ -10,7 +10,56 @@ body {
 }
 
 #feeds {
+  min-height: 200px;@import 'bootstrap/dist/css/bootstrap.min.css';
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  padding: 20px;
+}
+
+#feeds {
   min-height: 200px;
+}
+
+/* Анимация для кнопки при загрузке */
+.btn-loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 50%;
+  left: 50%;
+  margin-top: -10px;
+  margin-left: -10px;
+  border: 2px solid transparent;
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Стили для спиннера */
+.spinner-border {
+  vertical-align: middle;
+}
+
+/* Стили для переключателя языка */
+.form-select {
+  width: auto !important;
+}
 }
 
 /* Анимация для кнопки при загрузке */
