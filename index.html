@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="app.title">RSS агрегатор</title>
+  <title>RSS агрегатор</title>
 </head>
 <body>
   <div class="container mt-5">
-    <!-- Заголовок с data-атрибутом для i18next -->
-    <h1 class="text-center mb-4" data-i18n="app.title">RSS агрегатор</h1>
+    <!-- ID: app-title -->
+    <h1 class="text-center mb-4" id="app-title">RSS агрегатор</h1>
     
-    <!-- Переключатель языка (опционально) -->
+    <!-- ID: language-switcher -->
     <div class="text-end mb-3">
       <select class="form-select form-select-sm w-auto d-inline-block" id="language-switcher">
         <option value="ru" selected>Русский</option>
@@ -21,37 +21,43 @@
     
     <div class="row justify-content-center">
       <div class="col-md-8 col-lg-6">
-        <!-- Форма с data-атрибутами для i18next -->
+        <!-- ID: rss-form -->
         <form id="rss-form" class="mb-4">
           <div class="mb-3">
-            <label for="url-input" class="form-label" data-i18n="form.label">RSS ссылка</label>
+            <!-- ID: form-label -->
+            <label for="url-input" class="form-label" id="form-label">RSS ссылка</label>
             <div class="input-group">
+              <!-- ID: url-input -->
               <input
                 type="text"
                 class="form-control"
                 id="url-input"
                 name="url"
-                data-i18n-placeholder="form.placeholder"
                 placeholder="https://example.com/rss"
                 required
                 autofocus
               >
-              <button class="btn btn-primary" type="submit" id="submit-btn" data-i18n="form.submit">
+              <!-- ID: submit-btn -->
+              <button class="btn btn-primary" type="submit" id="submit-btn">
                 Добавить
               </button>
             </div>
-            <div class="form-text" data-i18n="form.help">
+            <!-- ID: form-help -->
+            <div class="form-text" id="form-help">
               Введите URL RSS-ленты
             </div>
+            <!-- ID: url-feedback -->
             <div class="form-text text-danger mt-1" id="url-feedback"></div>
           </div>
         </form>
         
-        <!-- Секция фидов -->
         <div class="mt-4">
-          <h3 class="h5" data-i18n="feeds.title">Добавленные RSS ленты</h3>
+          <!-- ID: feeds-title -->
+          <h3 class="h5" id="feeds-title">Добавленные RSS ленты</h3>
+          <!-- ID: feeds -->
           <div id="feeds" class="mt-3">
-            <p class="text-muted" data-i18n="feeds.empty">Пока нет добавленных RSS лент</p>
+            <!-- ID: feeds-empty -->
+            <p class="text-muted" id="feeds-empty">Пока нет добавленных RSS лент</p>
           </div>
         </div>
       </div>

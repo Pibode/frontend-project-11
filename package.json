@@ -16,9 +16,6 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
-    "bootstrap": "^5.3.3",
-    "i18next": "^25.8.0",
-    "on-change": "^4.0.2",
-    "yup": "^1.7.1"
+    "bootstrap": "^5.3.3"
   }
 }
