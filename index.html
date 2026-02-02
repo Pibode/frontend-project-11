@@ -8,10 +8,9 @@
 </head>
 <body>
   <div class="container mt-5">
-    <!-- ID: app-title -->
     <h1 class="text-center mb-4" id="app-title">RSS агрегатор</h1>
     
-    <!-- ID: language-switcher -->
+    <!-- Переключатель языка -->
     <div class="text-end mb-3">
       <select class="form-select form-select-sm w-auto d-inline-block" id="language-switcher">
         <option value="ru" selected>Русский</option>
@@ -20,14 +19,12 @@
     </div>
     
     <div class="row justify-content-center">
-      <div class="col-md-8 col-lg-6">
-        <!-- ID: rss-form -->
+      <div class="col-md-10 col-lg-8">
+        <!-- Форма -->
         <form id="rss-form" class="mb-4">
           <div class="mb-3">
-            <!-- ID: form-label -->
             <label for="url-input" class="form-label" id="form-label">RSS ссылка</label>
             <div class="input-group">
-              <!-- ID: url-input -->
               <input
                 type="text"
                 class="form-control"
@@ -36,29 +33,29 @@
                 placeholder="https://example.com/rss"
                 required
                 autofocus
+                title="Пожалуйста, заполните это поле"
               >
-              <!-- ID: submit-btn -->
               <button class="btn btn-primary" type="submit" id="submit-btn">
                 Добавить
               </button>
             </div>
-            <!-- ID: form-help -->
             <div class="form-text" id="form-help">
               Введите URL RSS-ленты
             </div>
-            <!-- ID: url-feedback -->
-            <div class="form-text text-danger mt-1" id="url-feedback"></div>
+            <div class="form-text mt-1" id="url-feedback"></div>
           </div>
         </form>
         
-        <div class="mt-4">
-          <!-- ID: feeds-title -->
-          <h3 class="h5" id="feeds-title">Добавленные RSS ленты</h3>
-          <!-- ID: feeds -->
-          <div id="feeds" class="mt-3">
-            <!-- ID: feeds-empty -->
-            <p class="text-muted" id="feeds-empty">Пока нет добавленных RSS лент</p>
-          </div>
+        <!-- Фиды -->
+        <div id="feeds-section" class="mt-4">
+          <!-- Заголовок "Фиды" будет создан скриптом -->
+          <div id="feeds-container" class="mt-3"></div>
+        </div>
+        
+        <!-- Посты -->
+        <div id="posts-section" class="mt-4">
+          <!-- Заголовок "Посты" будет создан скриптом -->
+          <div id="posts-container" class="mt-3"></div>
         </div>
       </div>
     </div>

@@ -7,12 +7,64 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   padding: 20px;
+  background-color: #f8f9fa;
 }
 
-#feeds {
-  min-height: 200px;
+.container {
+  max-width: 1200px;
+  background: white;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.form-select {
-  width: auto !important;
+/* Списки */
+.list-group-item {
+  border-left: none;
+  border-right: none;
+  padding: 15px;
+}
+
+.list-group-item:first-child {
+  border-top: none;
+}
+
+.list-group-item:last-child {
+  border-bottom: none;
+}
+
+/* Ссылки в постах */
+.list-group-item-action {
+  color: #495057;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.list-group-item-action:hover {
+  background-color: #f8f9fa;
+  text-decoration: none;
+  color: #495057;
+}
+
+/* Спиннер */
+.spinner-border {
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+/* Сообщения */
+.text-success {
+  color: #28a745 !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.text-info {
+  color: #17a2b8 !important;
+}
+
+.text-muted {
+  color: #6c757d !important;
 }
