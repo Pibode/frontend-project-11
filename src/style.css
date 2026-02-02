@@ -68,3 +68,21 @@ body {
 .text-muted {
   color: #6c757d !important;
 }
+
+/* Уведомления */
+.alert {
+  border-radius: 6px;
+  border: none;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+  color: #0c5460;
+}
+
+/* Переключатель языка */
+.form-select {
+  width: auto !important;
+  display: inline-block;
+}
