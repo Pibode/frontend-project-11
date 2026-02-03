@@ -42,7 +42,8 @@ const parseRSS = (xmlString) => {
     const description = getText(item, "description") || "";
 
     // Генерируем уникальный ID поста на основе заголовка и ссылки
-    const postId = `post-${btoa(title + link).substring(0, 16)}-${Date.now()}`;
+    // Для lorem-rss используем первые 20 символов заголовка как ID
+    const postId = `post-${btoa(encodeURIComponent(title.substring(0, 20))).substring(0, 20)}`;
 
     return {
       id: postId,
@@ -59,7 +60,15 @@ const parseRSS = (xmlString) => {
 // Функция для извлечения только новых постов
 export const getNewPosts = (parsedData, existingPosts) => {
   const existingPostIds = new Set(existingPosts.map((post) => post.id));
-  return parsedData.posts.filter((post) => !existingPostIds.has(post.id));
+  const newPosts = parsedData.posts.filter(
+    (post) => !existingPostIds.has(post.id),
+  );
+
+  console.log(
+    `Filtering: ${parsedData.posts.length} total, ${existingPosts.length} existing, ${newPosts.length} new`,
+  );
+
+  return newPosts;
 };
 
 export default parseRSS;

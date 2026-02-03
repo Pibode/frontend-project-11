@@ -23,6 +23,7 @@ body {
   border-left: none;
   border-right: none;
   padding: 15px;
+  transition: background-color 0.2s;
 }
 
 .list-group-item:first-child {
@@ -34,16 +35,38 @@ body {
 }
 
 /* Ссылки в постах */
-.list-group-item-action {
-  color: #495057;
-  text-decoration: none;
-  transition: background-color 0.2s;
+.text-decoration-none:hover {
+  text-decoration: underline !important;
 }
 
-.list-group-item-action:hover {
-  background-color: #f8f9fa;
-  text-decoration: none;
-  color: #495057;
+/* Кнопка предпросмотра */
+.btn-outline-primary {
+  border-width: 1px;
+  min-width: 40px;
+}
+
+/* Жирный текст для новых постов (ШАГ 4) */
+.fw-bold {
+  font-weight: 600 !important;
+  color: #0d6efd !important;
+}
+
+/* Нормальный текст для прочитанных постов (ШАГ 4) */
+.fw-normal {
+  font-weight: 400 !important;
+  color: #495057 !important;
+}
+
+/* Модальное окно (ШАГ 3) */
+.modal-body {
+  max-height: 60vh;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.modal-body img {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Спиннер */
@@ -67,18 +90,6 @@ body {
 
 .text-muted {
   color: #6c757d !important;
-}
-
-/* Уведомления */
-.alert {
-  border-radius: 6px;
-  border: none;
-}
-
-.alert-info {
-  background-color: #d1ecf1;
-  border-color: #bee5eb;
-  color: #0c5460;
 }
 
 /* Переключатель языка */
