@@ -21,7 +21,7 @@ const parseRSS = (xmlString) => {
   };
 
   const feed = {
-    id: `feed-${Date.now()}`,
+    id: `feed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     title: getText(channel, "title") || "Без названия",
     description: getText(channel, "description") || "",
   };
@@ -39,12 +39,19 @@ const parseRSS = (xmlString) => {
       }
     }
 
+    const guid = getText(item, "guid");
+    const pubDate = getText(item, "pubDate");
+
     return {
-      id: `post-${Date.now()}-${index}`,
+      id:
+        guid ||
+        `post-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
       feedId: feed.id,
       title,
       link: link || "#",
-      description: getText(item, "description") || "",
+      description:
+        getText(item, "description") || getText(item, "content:encoded") || "",
+      pubDate: pubDate || new Date().toISOString(),
     };
   });
 

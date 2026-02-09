@@ -1,7 +1,7 @@
 import "./style.css";
+import axios from "axios";
 import { fetchRSS, checkForUpdates } from "./lib/rssService.js";
 import parseRSS, { getNewPosts } from "./lib/parser/rssParser.js";
-
 // Простые переводы
 const translations = {
   ru: {
