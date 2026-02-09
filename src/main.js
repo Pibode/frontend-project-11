@@ -19,9 +19,9 @@ const translations = {
       required: "Не должно быть пустым",
       url: "Ссылка должна быть валидным URL",
       duplicate: "RSS уже существует",
-      network: "Ошибка сети. Проверьте подключение",
-      parse: "Ошибка парсинга RSS",
-      invalid: "Неверный RSS формат",
+      network: "Ошибка сети",
+      parse: "Ресурс не содержит валидный RSS", // ИЗМЕНИЛИ!
+      invalid: "Ресурс не содержит валидный RSS", // ИЗМЕНИЛИ!
       unknown: "Неизвестная ошибка",
     },
     status: {
@@ -43,9 +43,9 @@ const translations = {
       required: "Should not be empty",
       url: "Link must be a valid URL",
       duplicate: "RSS already exists",
-      network: "Network error. Check your connection",
-      parse: "RSS parsing error",
-      invalid: "Invalid RSS format",
+      network: "Network error",
+      parse: "This source doesn't contain valid RSS", // ИЗМЕНИЛИ!
+      invalid: "This source doesn't contain valid RSS", // ИЗМЕНИЛИ!
       unknown: "Unknown error",
     },
     status: {
