@@ -6,13 +6,13 @@ const parseRSS = (xmlString) => {
   // Проверяем на ошибки парсинга
   const parserError = xmlDoc.querySelector('parsererror');
   if (parserError) {
-    throw new Error('parseError'); // Это приведет к "Ресурс не содержит валидный RSS"
+    throw new Error('parseError');
   }
   
   // Извлекаем данные фида
   const channel = xmlDoc.querySelector('channel');
   if (!channel) {
-    throw new Error('noChannel'); // Это тоже приведет к "Ресурс не содержит валидный RSS"
+    throw new Error('noChannel');
   }
   
   const getText = (element, selector) => {
@@ -49,6 +49,12 @@ const parseRSS = (xmlString) => {
   });
   
   return { feed, posts };
+};
+
+// Функция для извлечения только новых постов
+export const getNewPosts = (parsedData, existingPosts) => {
+  const existingPostIds = new Set(existingPosts.map(post => post.id));
+  return parsedData.posts.filter(post => !existingPostIds.has(post.id));
 };
 
 export default parseRSS;

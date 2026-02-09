@@ -9,19 +9,18 @@ export const fetchRSS = async (url) => {
   try {
     const proxiedUrl = getProxiedUrl(url);
     const response = await axios.get(proxiedUrl, {
-      timeout: 5000, // Уменьшим таймаут для тестов
+      timeout: 5000,
     });
-    
+
     if (response.status !== 200) {
       throw new Error("networkError");
     }
-    
+
     if (!response.data?.contents) {
       throw new Error("invalidResponse");
     }
-    
+
     return response.data.contents;
-    
   } catch (error) {
     if (error.code === "ECONNABORTED") {
       throw new Error("timeoutError");
