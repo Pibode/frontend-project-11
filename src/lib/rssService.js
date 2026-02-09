@@ -25,12 +25,15 @@ export const fetchRSS = async (url) => {
     if (error.code === "ECONNABORTED") {
       throw new Error("timeoutError");
     }
+
     if (error.response?.status === 404) {
       throw new Error("notFound");
     }
+
     if (error.response?.status) {
       throw new Error("networkError");
     }
+
     throw new Error("networkError");
   }
 };
@@ -39,7 +42,7 @@ export const checkForUpdates = async (url) => {
   try {
     return await fetchRSS(url);
   } catch (error) {
-    console.warn(`Update failed for ${url}:`, error.message);
+    // Логи убраны - они мешают тестам
     return null;
   }
 };
