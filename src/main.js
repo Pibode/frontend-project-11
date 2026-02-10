@@ -152,18 +152,23 @@ const app = () => {
   const fetchRSS = async (url) => {
     try {
       const proxyUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
-      const response = await axios.get(proxyUrl, { timeout: 5000 });
+      const response = await axios.get(proxyUrl, { 
+        timeout: 5000,
+        validateStatus: () => true // Принимаем все статусы
+      });
       
-      if (response.status !== 200 || !response.data?.contents) {
+      if (response.status !== 200) {
+        throw new Error('network');
+      }
+      
+      if (!response.data?.contents) {
         throw new Error('network');
       }
       
       return response.data.contents;
     } catch (error) {
-      if (error.code === 'ECONNABORTED' || error.response?.status) {
-        throw new Error('network');
-      }
-      throw new Error('unknown');
+      // Все ошибки считаем сетевыми
+      throw new Error('network');
     }
   };
 
@@ -433,14 +438,6 @@ const app = () => {
         renderForm();
         renderFeeds();
         renderPosts();
-        
-        // Для тестов: не скрываем сообщение об успехе
-        // setTimeout(() => {
-        //   if (state.ui.form.state === 'success') {
-        //     state.ui.form.state = 'filling';
-        //     renderForm();
-        //   }
-        // }, 5000);
         
       } catch (error) {
         state.ui.form.state = 'error';
