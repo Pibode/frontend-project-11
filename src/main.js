@@ -1,5 +1,5 @@
 import "./style.css";
-import axios from 'axios';
+import axios from "axios";
 import { fetchRSS, checkForUpdates } from "./lib/rssService.js";
 import parseRSS, { getNewPosts } from "./lib/parser/rssParser.js";
 
@@ -79,7 +79,37 @@ const app = () => {
     modal: null,
     modalTitle: null,
     modalBody: null,
-    modalClose: null,
+  };
+
+  // Создание модального окна
+  const createModal = () => {
+    const modalHTML = `
+      <div class="modal fade" id="postModal" tabindex="-1" aria-labelledby="postModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="postModalLabel"></h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+              <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Читать полностью</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML("beforeend", modalHTML);
+
+    const modalElement = document.getElementById("postModal");
+    if (modalElement) {
+      elements.modal = new bootstrap.Modal(modalElement);
+      elements.modalTitle = document.getElementById("postModalLabel");
+      elements.modalBody = modalElement.querySelector(".modal-body");
+      elements.fullArticleBtn = modalElement.querySelector(".btn-primary");
+    }
   };
 
   // Функция обновления всех RSS потоков
@@ -253,48 +283,21 @@ const app = () => {
 
   // Открытие модального окна с постом
   const openPostModal = (post) => {
-    // Создаем модальное окно, если его нет
     if (!elements.modal) {
-      const modalHTML = `
-        <div class="modal fade" id="postModal" tabindex="-1" aria-labelledby="postModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="postModalLabel"></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body"></div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Читать полностью</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      document.body.insertAdjacentHTML('beforeend', modalHTML);
-      
-      const modalElement = document.getElementById('postModal');
-      if (modalElement) {
-        elements.modal = new bootstrap.Modal(modalElement);
-        elements.modalTitle = document.getElementById('postModalLabel');
-        elements.modalBody = modalElement.querySelector('.modal-body');
-        elements.fullArticleBtn = modalElement.querySelector('.btn-primary');
-      }
+      createModal();
     }
 
     if (elements.modalTitle && elements.modalBody && elements.fullArticleBtn) {
       elements.modalTitle.textContent = post.title;
-      elements.modalBody.innerHTML = post.description || post.content || 'Нет содержимого';
+      elements.modalBody.innerHTML = post.description || "Нет содержимого";
       elements.fullArticleBtn.href = post.link;
-      
+
       // Помечаем пост как просмотренный
       viewedPostIds.add(post.id);
-      
+
       // Обновляем отображение поста
       updatePostViewStatus(post.id);
-      
+
       elements.modal.show();
     }
   };
@@ -303,9 +306,9 @@ const app = () => {
   const updatePostViewStatus = (postId) => {
     const postElement = document.querySelector(`[data-post-id="${postId}"]`);
     if (postElement) {
-      const titleElement = postElement.querySelector('.post-title');
+      const titleElement = postElement.querySelector(".post-title");
       if (titleElement) {
-        titleElement.classList.add('fw-bold');
+        titleElement.classList.add("fw-bold");
       }
     }
   };
@@ -329,7 +332,7 @@ const app = () => {
     posts.forEach((post) => {
       const feed = feeds.find((f) => f.id === post.feedId);
       const isViewed = viewedPostIds.has(post.id);
-      
+
       const item = document.createElement("div");
       item.className = "list-group-item";
       item.dataset.postId = post.id;
@@ -338,17 +341,17 @@ const app = () => {
           <div class="me-3 flex-grow-1">
             <a href="${post.link}" target="_blank" rel="noopener noreferrer" 
                class="text-decoration-none post-title-link" data-post-id="${post.id}">
-              <h6 class="mb-1 post-title ${isViewed ? 'fw-bold' : ''}">${post.title}</h6>
+              <h6 class="mb-1 post-title ${isViewed ? "fw-bold" : ""}">${post.title}</h6>
             </a>
-            <p class="mb-1 small text-muted">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? '...' : '') : ''}</p>
-            <small class="text-muted">${feed ? feed.title : ''}</small>
+            <p class="mb-1 small text-muted">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
+            <small class="text-muted">${feed ? feed.title : ""}</small>
           </div>
           <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
             ${t.viewButton}
           </button>
         </div>
       `;
-      
+
       list.appendChild(item);
     });
 
@@ -356,11 +359,11 @@ const app = () => {
     container.appendChild(list);
 
     // Добавляем обработчики кликов на кнопки просмотра
-    container.querySelectorAll('.view-post-btn').forEach(button => {
-      button.addEventListener('click', (e) => {
+    container.querySelectorAll(".view-post-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
         e.preventDefault();
         const postId = e.currentTarget.dataset.postId;
-        const post = posts.find(p => p.id === postId);
+        const post = posts.find((p) => p.id === postId);
         if (post) {
           openPostModal(post);
         }
@@ -368,11 +371,18 @@ const app = () => {
     });
 
     // Добавляем обработчики кликов на ссылки постов
-    container.querySelectorAll('.post-title-link').forEach(link => {
-      link.addEventListener('click', (e) => {
+    container.querySelectorAll(".post-title-link").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
         const postId = e.currentTarget.dataset.postId;
         viewedPostIds.add(postId);
         updatePostViewStatus(postId);
+
+        // Открываем ссылку в новой вкладке
+        const post = posts.find((p) => p.id === postId);
+        if (post && post.link && post.link !== "#") {
+          window.open(post.link, "_blank", "noopener,noreferrer");
+        }
       });
     });
   };
@@ -406,7 +416,7 @@ const app = () => {
         "text-success",
         "text-info",
       );
-      elements.urlFeedback.textContent = ""; // Очищаем сообщение
+      elements.urlFeedback.textContent = "";
       elements.submitBtn.disabled = true;
       elements.submitBtn.innerHTML = `
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>

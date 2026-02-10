@@ -16,15 +16,35 @@ const parseRSS = (xmlString) => {
   }
 
   const getText = (element, selector) => {
-    const el = element.querySelector(selector);
-    return el ? el.textContent.trim() : "";
-  };
-
-  const getAttribute = (element, selector, attribute) => {
-    const el = element.querySelector(selector);
-    return el && el.getAttribute(attribute)
-      ? el.getAttribute(attribute).trim()
-      : "";
+    try {
+      // Обрабатываем селекторы с двоеточиями (как content:encoded)
+      if (selector.includes(':')) {
+        // Для namespace селекторов ищем через getElementsByTagNameNS
+        const parts = selector.split(':');
+        if (parts.length === 2) {
+          const [namespace, tagName] = parts;
+          let elements;
+          
+          // Пробуем разные namespace
+          if (namespace === 'content') {
+            elements = element.getElementsByTagNameNS('http://purl.org/rss/1.0/modules/content/', 'encoded');
+          } else if (namespace === 'dc') {
+            elements = element.getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', tagName);
+          }
+          
+          if (elements && elements.length > 0) {
+            return elements[0].textContent.trim();
+          }
+        }
+      }
+      
+      // Стандартный поиск
+      const el = element.querySelector(selector);
+      return el ? el.textContent.trim() : "";
+    } catch (error) {
+      console.warn(`Error parsing selector ${selector}:`, error);
+      return "";
+    }
   };
 
   const feed = {
@@ -40,35 +60,31 @@ const parseRSS = (xmlString) => {
 
     let link = getText(item, "link");
     if (!link) {
-      link = getAttribute(item, "link", "href");
-    }
-    if (!link) {
-      const guid = getText(item, "guid");
-      if (guid && guid.startsWith("http")) {
-        link = guid;
+      // Пробуем получить ссылку из атрибута
+      const linkElement = item.querySelector("link");
+      if (linkElement) {
+        link = linkElement.getAttribute("href") || linkElement.textContent.trim();
       }
     }
 
     const guid = getText(item, "guid");
     const pubDate = getText(item, "pubDate") || getText(item, "dc:date");
-    const description =
-      getText(item, "description") ||
-      getText(item, "content:encoded") ||
-      getText(item, "content") ||
-      "";
+    
+    // Получаем описание (пробуем разные селекторы)
+    let description = getText(item, "description");
+    if (!description) {
+      description = getText(item, "content\\:encoded") || 
+                    getText(item, "content") || 
+                    "";
+    }
 
     return {
-      id:
-        guid ||
-        `post-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+      id: guid || `post-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
       feedId: feed.id,
       title,
       link: link || "#",
       description,
-      content:
-        getText(item, "content:encoded") ||
-        getText(item, "content") ||
-        description,
+      content: description,
       pubDate: pubDate || new Date().toISOString(),
     };
   });
