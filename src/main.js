@@ -82,37 +82,6 @@ const app = () => {
     modalClose: null,
   };
 
-  // Создание модального окна
-  const createModal = () => {
-    const modalHTML = `
-      <div class="modal fade" id="postModal" tabindex="-1" aria-labelledby="postModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="postModalLabel"></h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body"></div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-              <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Читать полностью</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    const modalElement = document.getElementById('postModal');
-    if (modalElement) {
-      elements.modal = new bootstrap.Modal(modalElement);
-      elements.modalTitle = document.getElementById('postModalLabel');
-      elements.modalBody = modalElement.querySelector('.modal-body');
-      elements.fullArticleBtn = modalElement.querySelector('.btn-primary');
-    }
-  };
-
   // Функция обновления всех RSS потоков
   const updateAllFeeds = async () => {
     if (feeds.length === 0) {
@@ -284,6 +253,37 @@ const app = () => {
 
   // Открытие модального окна с постом
   const openPostModal = (post) => {
+    // Создаем модальное окно, если его нет
+    if (!elements.modal) {
+      const modalHTML = `
+        <div class="modal fade" id="postModal" tabindex="-1" aria-labelledby="postModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="postModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body"></div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Читать полностью</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+      
+      const modalElement = document.getElementById('postModal');
+      if (modalElement) {
+        elements.modal = new bootstrap.Modal(modalElement);
+        elements.modalTitle = document.getElementById('postModalLabel');
+        elements.modalBody = modalElement.querySelector('.modal-body');
+        elements.fullArticleBtn = modalElement.querySelector('.btn-primary');
+      }
+    }
+
     if (elements.modalTitle && elements.modalBody && elements.fullArticleBtn) {
       elements.modalTitle.textContent = post.title;
       elements.modalBody.innerHTML = post.description || post.content || 'Нет содержимого';
@@ -306,7 +306,6 @@ const app = () => {
       const titleElement = postElement.querySelector('.post-title');
       if (titleElement) {
         titleElement.classList.add('fw-bold');
-        titleElement.classList.remove('fw-normal');
       }
     }
   };
@@ -339,7 +338,7 @@ const app = () => {
           <div class="me-3 flex-grow-1">
             <a href="${post.link}" target="_blank" rel="noopener noreferrer" 
                class="text-decoration-none post-title-link" data-post-id="${post.id}">
-              <h6 class="mb-1 post-title ${isViewed ? 'fw-bold' : 'fw-normal'}">${post.title}</h6>
+              <h6 class="mb-1 post-title ${isViewed ? 'fw-bold' : ''}">${post.title}</h6>
             </a>
             <p class="mb-1 small text-muted">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? '...' : '') : ''}</p>
             <small class="text-muted">${feed ? feed.title : ''}</small>
@@ -368,32 +367,12 @@ const app = () => {
       });
     });
 
-    // Добавляем обработчики кликов на ссылки постов (для теста)
+    // Добавляем обработчики кликов на ссылки постов
     container.querySelectorAll('.post-title-link').forEach(link => {
       link.addEventListener('click', (e) => {
-        e.preventDefault();
         const postId = e.currentTarget.dataset.postId;
         viewedPostIds.add(postId);
         updatePostViewStatus(postId);
-        
-        // Также открываем ссылку в новой вкладке
-        const post = posts.find(p => p.id === postId);
-        if (post && post.link && post.link !== '#') {
-          window.open(post.link, '_blank', 'noopener,noreferrer');
-        }
-      });
-    });
-
-    // Также добавляем обработчики на сами заголовки (на всякий случай)
-    container.querySelectorAll('.post-title').forEach(title => {
-      title.addEventListener('click', (e) => {
-        e.preventDefault();
-        const linkElement = e.target.closest('.post-title-link');
-        if (linkElement) {
-          const postId = linkElement.dataset.postId;
-          viewedPostIds.add(postId);
-          updatePostViewStatus(postId);
-        }
       });
     });
   };
@@ -407,7 +386,6 @@ const app = () => {
   }
 
   // Инициализация UI
-  createModal();
   updateUI();
 
   // Запускаем автообновление
@@ -428,6 +406,7 @@ const app = () => {
         "text-success",
         "text-info",
       );
+      elements.urlFeedback.textContent = ""; // Очищаем сообщение
       elements.submitBtn.disabled = true;
       elements.submitBtn.innerHTML = `
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -543,6 +522,7 @@ const app = () => {
     elements.urlFeedback.classList.add("text-success");
     elements.urlFeedback.textContent = message;
 
+    // Убираем сообщение через 3 секунды
     setTimeout(() => {
       elements.urlInput.classList.remove("is-valid");
       elements.urlFeedback.classList.remove("text-success");
