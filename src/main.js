@@ -1,360 +1,85 @@
 import "./style.css";
-import axios from "axios";
+import axios from 'axios';
+import { fetchRSS, checkForUpdates } from "./lib/rssService.js";
+import parseRSS, { getNewPosts } from "./lib/parser/rssParser.js";
+
+// Простые переводы
+const translations = {
+  ru: {
+    appTitle: "RSS агрегатор",
+    formLabel: "RSS ссылка",
+    formPlaceholder: "https://example.com/rss",
+    formHelp: "Пример: https://ru.hexlet.io/lessons.rss",
+    formSubmit: "Добавить",
+    feedsTitle: "Фиды",
+    postsTitle: "Посты",
+    feedsEmpty: "Пока нет фидов",
+    postsEmpty: "Пока нет постов",
+    feedback: {
+      success: "RSS успешно загружен",
+      required: "Не должно быть пустым",
+      url: "Ссылка должна быть валидным URL",
+      duplicate: "RSS уже существует",
+      network: "Ошибка сети",
+      parse: "Ресурс не содержит валидный RSS",
+      invalid: "Ресурс не содержит валидный RSS",
+      unknown: "Неизвестная ошибка",
+    },
+    status: {
+      loading: "Загрузка...",
+    },
+    viewButton: "Просмотр",
+  },
+  en: {
+    appTitle: "RSS Aggregator",
+    formLabel: "RSS link",
+    formPlaceholder: "https://example.com/rss",
+    formHelp: "Example: https://ru.hexlet.io/lessons.rss",
+    formSubmit: "Add",
+    feedsTitle: "Feeds",
+    postsTitle: "Posts",
+    feedsEmpty: "No feeds yet",
+    postsEmpty: "No posts yet",
+    feedback: {
+      success: "RSS successfully loaded",
+      required: "Should not be empty",
+      url: "Link must be a valid URL",
+      duplicate: "RSS already exists",
+      network: "Network error",
+      parse: "The resource does not contain valid RSS",
+      invalid: "The resource does not contain valid RSS",
+      unknown: "Unknown error",
+    },
+    status: {
+      loading: "Loading...",
+    },
+    viewButton: "View",
+  },
+};
+
+let currentLang = "ru";
+let feeds = [];
+let posts = [];
+let updateTimeout = null;
+let viewedPostIds = new Set();
 
 const app = () => {
-  const state = {
-    feeds: [],
-    posts: [],
-    ui: {
-      form: {
-        state: "filling", // filling, sending, success, error
-        error: null,
-        url: "",
-        valid: true,
-      },
-      posts: {
-        viewedIds: new Set(),
-      },
-      language: "ru",
-    },
-  };
-
+  // Получаем элементы
   const elements = {
-    form: document.getElementById("rss-form"),
-    input: document.getElementById("url-input"),
-    feedback: document.getElementById("url-feedback"),
-    submit: document.getElementById("submit-btn"),
-    feedsContainer: document.getElementById("feeds-container"),
-    postsContainer: document.getElementById("posts-container"),
+    appTitle: document.getElementById("app-title"),
+    formLabel: document.getElementById("form-label"),
+    urlInput: document.getElementById("url-input"),
+    formHelp: document.getElementById("form-help"),
+    submitBtn: document.getElementById("submit-btn"),
+    urlFeedback: document.getElementById("url-feedback"),
+    rssForm: document.getElementById("rss-form"),
     languageSwitcher: document.getElementById("language-switcher"),
-  };
-
-  const i18n = {
-    ru: {
-      appTitle: "RSS агрегатор",
-      formLabel: "RSS ссылка",
-      formPlaceholder: "https://example.com/rss",
-      formHelp: "Пример: https://ru.hexlet.io/lessons.rss",
-      formSubmit: "Добавить",
-      feedsTitle: "Фиды",
-      postsTitle: "Посты",
-      feedsEmpty: "Пока нет фидов",
-      postsEmpty: "Пока нет постов",
-      feedback: {
-        success: "RSS успешно загружен",
-        required: "Не должно быть пустым",
-        url: "Ссылка должна быть валидным URL",
-        duplicate: "RSS уже существует",
-        network: "Ошибка сети",
-        parse: "Ресурс не содержит валидный RSS",
-        invalid: "Ресурс не содержит валидный RSS",
-        unknown: "Неизвестная ошибка",
-      },
-      status: {
-        loading: "Загрузка...",
-      },
-      viewButton: "Просмотр",
-    },
-    en: {
-      appTitle: "RSS Aggregator",
-      formLabel: "RSS link",
-      formPlaceholder: "https://example.com/rss",
-      formHelp: "Example: https://ru.hexlet.io/lessons.rss",
-      formSubmit: "Add",
-      feedsTitle: "Feeds",
-      postsTitle: "Posts",
-      feedsEmpty: "No feeds yet",
-      postsEmpty: "No posts yet",
-      feedback: {
-        success: "RSS successfully loaded",
-        required: "Should not be empty",
-        url: "Link must be a valid URL",
-        duplicate: "RSS already exists",
-        network: "Network error",
-        parse: "The resource does not contain valid RSS",
-        invalid: "The resource does not contain valid RSS",
-        unknown: "Unknown error",
-      },
-      status: {
-        loading: "Loading...",
-      },
-      viewButton: "View",
-    },
-  };
-
-  // Валидация URL
-  const validateUrl = (url) => {
-    if (!url.trim()) {
-      return "required";
-    }
-
-    try {
-      new URL(url);
-    } catch {
-      return "url";
-    }
-
-    if (state.feeds.some((feed) => feed.url === url)) {
-      return "duplicate";
-    }
-
-    return null;
-  };
-
-  // Парсинг RSS
-  const parseRSS = (content) => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(content, "text/xml");
-
-    const error = doc.querySelector("parsererror");
-    if (error) {
-      throw new Error("parse");
-    }
-
-    const channel = doc.querySelector("channel");
-    if (!channel) {
-      throw new Error("parse");
-    }
-
-    const getText = (el, selector) => {
-      const found = el.querySelector(selector);
-      return found ? found.textContent.trim() : "";
-    };
-
-    const feedId = `feed-${Date.now()}`;
-    const feed = {
-      id: feedId,
-      title: getText(channel, "title") || "Без названия",
-      description: getText(channel, "description") || "",
-      url: state.ui.form.url,
-    };
-
-    const items = Array.from(doc.querySelectorAll("item"));
-    const posts = items.map((item, index) => {
-      const title = getText(item, "title") || "Без названия";
-      const link = getText(item, "link") || "#";
-      const description = getText(item, "description") || "";
-      const pubDate = getText(item, "pubDate") || "";
-
-      return {
-        id: `post-${feedId}-${index}`,
-        feedId,
-        title,
-        link,
-        description,
-        pubDate,
-      };
-    });
-
-    return { feed, posts };
-  };
-
-  // Загрузка RSS через прокси
-  const fetchRSS = async (url) => {
-    try {
-      const proxyUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
-      const response = await axios.get(proxyUrl, {
-        timeout: 5000,
-        validateStatus: () => true,
-      });
-
-      if (response.status !== 200) {
-        throw new Error("network");
-      }
-
-      if (!response.data?.contents) {
-        throw new Error("network");
-      }
-
-      return response.data.contents;
-    } catch (error) {
-      throw new Error("network");
-    }
-  };
-
-  // Обновление UI формы
-  const renderForm = () => {
-    const t = i18n[state.ui.language];
-
-    elements.input.placeholder = t.formPlaceholder;
-    elements.submit.textContent = t.formSubmit;
-
-    switch (state.ui.form.state) {
-      case "filling":
-        elements.submit.disabled = false;
-        elements.submit.innerHTML = t.formSubmit;
-        break;
-
-      case "sending":
-        elements.submit.disabled = true;
-        elements.submit.innerHTML = `
-          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          ${t.status.loading}
-        `;
-        break;
-
-      case "success":
-        elements.submit.disabled = false;
-        elements.submit.textContent = t.formSubmit;
-        break;
-
-      case "error":
-        elements.submit.disabled = false;
-        elements.submit.textContent = t.formSubmit;
-        break;
-    }
-
-    if (state.ui.form.error) {
-      elements.input.classList.remove("is-valid");
-      elements.input.classList.add("is-invalid");
-      elements.feedback.classList.remove("text-success", "text-info");
-      elements.feedback.classList.add("text-danger");
-      elements.feedback.textContent = t.feedback[state.ui.form.error];
-    } else if (state.ui.form.state === "success") {
-      elements.input.classList.remove("is-invalid");
-      elements.input.classList.add("is-valid");
-      elements.feedback.classList.remove("text-danger", "text-info");
-      elements.feedback.classList.add("text-success");
-      elements.feedback.textContent = t.feedback.success;
-    } else {
-      elements.input.classList.remove("is-invalid", "is-valid");
-      elements.feedback.classList.remove(
-        "text-danger",
-        "text-success",
-        "text-info",
-      );
-      elements.feedback.textContent = "";
-    }
-  };
-
-  // Рендер фидов
-  const renderFeeds = () => {
-    const t = i18n[state.ui.language];
-    const container = elements.feedsContainer;
-
-    if (!container) return;
-
-    if (state.feeds.length === 0) {
-      container.innerHTML = `<div class="card border-0"><div class="card-body"><p class="text-muted mb-0">${t.feedsEmpty}</p></div></div>`;
-      return;
-    }
-
-    container.innerHTML = "";
-
-    state.feeds.forEach((feed) => {
-      const feedCard = document.createElement("div");
-      feedCard.className = "card border-0 mb-3";
-      feedCard.innerHTML = `
-        <div class="card-body">
-          <h5 class="card-title">${feed.title}</h5>
-          <p class="card-text text-muted small">${feed.description}</p>
-        </div>
-      `;
-      container.appendChild(feedCard);
-    });
-  };
-
-  // Рендер постов
-  const renderPosts = () => {
-    const t = i18n[state.ui.language];
-    const container = elements.postsContainer;
-
-    if (!container) return;
-
-    if (state.posts.length === 0) {
-      container.innerHTML = `<div class="card border-0"><div class="card-body"><p class="text-muted mb-0">${t.postsEmpty}</p></div></div>`;
-      return;
-    }
-
-    // Сортируем посты
-    const sortedPosts = [...state.posts].sort((a, b) => {
-      if (a.pubDate && b.pubDate) {
-        return new Date(b.pubDate) - new Date(a.pubDate);
-      }
-      return 0;
-    });
-
-    container.innerHTML = "";
-
-    sortedPosts.forEach((post) => {
-      const isViewed = state.ui.posts.viewedIds.has(post.id);
-
-      const postCard = document.createElement("div");
-      postCard.className = "card border-0 mb-3";
-      postCard.innerHTML = `
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start">
-            <div class="flex-grow-1">
-              <a href="${post.link}" target="_blank" rel="noopener noreferrer" 
-                 class="${isViewed ? "fw-bold" : ""}" 
-                 data-post-id="${post.id}">
-                ${post.title}
-              </a>
-              <div class="mt-2 small text-muted">${post.description.substring(0, 200)}${post.description.length > 200 ? "..." : ""}</div>
-            </div>
-            <button type="button" class="btn btn-outline-primary btn-sm ms-3 view-btn" data-post-id="${post.id}">
-              ${t.viewButton}
-            </button>
-          </div>
-        </div>
-      `;
-      container.appendChild(postCard);
-    });
-
-    // Обработчики для ссылок постов (для теста: делаем жирным при клике на саму ссылку)
-    container.querySelectorAll("a[data-post-id]").forEach((link) => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        const postId = e.currentTarget.dataset.postId;
-        markPostAsViewed(postId);
-        openPostModal(state.posts.find((p) => p.id === postId));
-      });
-    });
-
-    // Обработчики для кнопок просмотра
-    container.querySelectorAll(".view-btn").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        const postId = e.currentTarget.dataset.postId;
-        const post = state.posts.find((p) => p.id === postId);
-        if (post) {
-          markPostAsViewed(postId);
-          openPostModal(post);
-        }
-      });
-    });
-  };
-
-  // Пометить пост как просмотренный
-  const markPostAsViewed = (postId) => {
-    state.ui.posts.viewedIds.add(postId);
-
-    // Обновляем UI
-    const link = document.querySelector(`a[data-post-id="${postId}"]`);
-    if (link) {
-      link.classList.add("fw-bold");
-    }
-  };
-
-  // Открытие модального окна
-  const openPostModal = (post) => {
-    if (!post) return;
-
-    const modal = new bootstrap.Modal(
-      document.getElementById("postModal") || createModal(),
-    );
-    const modalTitle = document.getElementById("postModalLabel");
-    const modalBody = document.querySelector("#postModal .modal-body");
-    const fullArticleBtn = document.querySelector("#postModal .btn-primary");
-
-    if (modalTitle) modalTitle.textContent = post.title;
-    if (modalBody) modalBody.textContent = post.description;
-    if (fullArticleBtn) {
-      fullArticleBtn.href = post.link;
-      fullArticleBtn.textContent =
-        state.ui.language === "ru" ? "Читать полностью" : "Read full article";
-    }
-
-    modal.show();
+    feedsContainer: null,
+    postsContainer: null,
+    modal: null,
+    modalTitle: null,
+    modalBody: null,
+    modalClose: null,
   };
 
   // Создание модального окна
@@ -377,137 +102,469 @@ const app = () => {
       </div>
     `;
 
-    document.body.insertAdjacentHTML("beforeend", modalHTML);
-    return document.getElementById("postModal");
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    const modalElement = document.getElementById('postModal');
+    if (modalElement) {
+      elements.modal = new bootstrap.Modal(modalElement);
+      elements.modalTitle = document.getElementById('postModalLabel');
+      elements.modalBody = modalElement.querySelector('.modal-body');
+      elements.fullArticleBtn = modalElement.querySelector('.btn-primary');
+    }
   };
 
-  // Обновление заголовков
-  const updateTitles = () => {
-    const t = i18n[state.ui.language];
+  // Функция обновления всех RSS потоков
+  const updateAllFeeds = async () => {
+    if (feeds.length === 0) {
+      scheduleNextUpdate();
+      return;
+    }
 
-    // Заголовок приложения
-    const appTitle = document.getElementById("app-title");
-    if (appTitle) appTitle.textContent = t.appTitle;
+    console.log("Checking for RSS updates...");
+    let hasNewPosts = false;
 
-    // Заголовок формы
-    const formLabel = document.getElementById("form-label");
-    if (formLabel) formLabel.textContent = t.formLabel;
+    // Проверяем каждый фид
+    for (const feed of feeds) {
+      try {
+        const rssContent = await checkForUpdates(feed.url);
+        if (!rssContent) continue;
 
-    // Подсказка формы
-    const formHelp = document.getElementById("form-help");
-    if (formHelp) formHelp.textContent = t.formHelp;
+        const parsedData = parseRSS(rssContent);
+        const newPosts = getNewPosts(parsedData, posts);
 
-    // Заголовки разделов
+        if (newPosts.length > 0) {
+          console.log(`Found ${newPosts.length} new posts in ${feed.title}`);
+
+          const postsWithFeedId = newPosts.map((post) => ({
+            ...post,
+            feedId: feed.id,
+          }));
+
+          posts.unshift(...postsWithFeedId);
+          hasNewPosts = true;
+        }
+      } catch (error) {
+        console.warn(`Error updating feed ${feed.url}:`, error.message);
+      }
+    }
+
+    if (hasNewPosts) {
+      posts.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+      renderPosts();
+    }
+
+    scheduleNextUpdate();
+  };
+
+  // Функция планирования следующего обновления
+  const scheduleNextUpdate = () => {
+    if (updateTimeout) {
+      clearTimeout(updateTimeout);
+    }
+
+    updateTimeout = setTimeout(() => {
+      updateAllFeeds();
+    }, 5000);
+  };
+
+  // Функция обновления интерфейса
+  const updateUI = () => {
+    const t = translations[currentLang];
+
+    if (elements.appTitle) elements.appTitle.textContent = t.appTitle;
+    if (elements.formLabel) elements.formLabel.textContent = t.formLabel;
+    if (elements.urlInput) {
+      elements.urlInput.placeholder = t.formPlaceholder;
+      elements.urlInput.title =
+        currentLang === "ru"
+          ? "Пожалуйста, заполните это поле"
+          : "Please fill out this field";
+    }
+    if (elements.formHelp) elements.formHelp.textContent = t.formHelp;
+    if (elements.submitBtn) elements.submitBtn.textContent = t.formSubmit;
+
+    // Обновляем заголовки фидов и постов
+    updateSectionTitles();
+
+    // Обновляем списки
+    renderFeeds();
+    renderPosts();
+  };
+
+  // Функция обновления заголовков разделов
+  const updateSectionTitles = () => {
+    const t = translations[currentLang];
+
+    // Обновляем или создаем заголовок фидов
+    let feedsTitleEl = document.getElementById("feeds-title");
+    const feedsSection = document.getElementById("feeds-section");
+
+    if (feedsSection) {
+      if (!feedsTitleEl) {
+        feedsTitleEl = document.createElement("h3");
+        feedsTitleEl.className = "h5";
+        feedsTitleEl.id = "feeds-title";
+        feedsSection.prepend(feedsTitleEl);
+      }
+      feedsTitleEl.textContent = t.feedsTitle;
+    }
+
+    // Обновляем или создаем заголовок постов
+    let postsTitleEl = document.getElementById("posts-title");
+    const postsSection = document.getElementById("posts-section");
+
+    if (postsSection) {
+      if (!postsTitleEl) {
+        postsTitleEl = document.createElement("h3");
+        postsTitleEl.className = "h5";
+        postsTitleEl.id = "posts-title";
+        postsSection.prepend(postsTitleEl);
+      }
+      postsTitleEl.textContent = t.postsTitle;
+    }
+  };
+
+  // Функция обновления контейнеров
+  const createContainers = () => {
     const feedsSection = document.getElementById("feeds-section");
     const postsSection = document.getElementById("posts-section");
 
-    if (feedsSection) {
-      let feedsTitle = document.getElementById("feeds-title");
-      if (!feedsTitle) {
-        feedsTitle = document.createElement("h2");
-        feedsTitle.className = "h4 mb-3";
-        feedsTitle.id = "feeds-title";
-        feedsSection.prepend(feedsTitle);
+    if (feedsSection && !elements.feedsContainer) {
+      let container = document.getElementById("feeds-container");
+      if (!container) {
+        container = document.createElement("div");
+        container.id = "feeds-container";
+        container.className = "mt-3";
+        feedsSection.appendChild(container);
       }
-      feedsTitle.textContent = t.feedsTitle;
+      elements.feedsContainer = container;
     }
 
-    if (postsSection) {
-      let postsTitle = document.getElementById("posts-title");
-      if (!postsTitle) {
-        postsTitle = document.createElement("h2");
-        postsTitle.className = "h4 mb-3";
-        postsTitle.id = "posts-title";
-        postsSection.prepend(postsTitle);
+    if (postsSection && !elements.postsContainer) {
+      let container = document.getElementById("posts-container");
+      if (!container) {
+        container = document.createElement("div");
+        container.id = "posts-container";
+        container.className = "mt-3";
+        postsSection.appendChild(container);
       }
-      postsTitle.textContent = t.postsTitle;
+      elements.postsContainer = container;
     }
   };
 
-  // Инициализация
-  const init = () => {
-    // Создаем модальное окно
-    createModal();
+  // Рендер фидов
+  const renderFeeds = () => {
+    createContainers();
+    const container = elements.feedsContainer;
+    if (!container) return;
 
-    // Обновляем UI
-    updateTitles();
-    renderForm();
-    renderFeeds();
-    renderPosts();
+    const t = translations[currentLang];
 
-    // Обработчик формы
-    elements.form.addEventListener("submit", async (e) => {
+    if (feeds.length === 0) {
+      container.innerHTML = `<p class="text-muted">${t.feedsEmpty}</p>`;
+      return;
+    }
+
+    const list = document.createElement("div");
+    list.className = "list-group";
+
+    feeds.forEach((feed) => {
+      const item = document.createElement("div");
+      item.className = "list-group-item";
+      item.innerHTML = `
+        <h5 class="mb-1">${feed.title}</h5>
+        <p class="mb-1 text-muted small">${feed.description}</p>
+      `;
+      list.appendChild(item);
+    });
+
+    container.innerHTML = "";
+    container.appendChild(list);
+  };
+
+  // Открытие модального окна с постом
+  const openPostModal = (post) => {
+    if (elements.modalTitle && elements.modalBody && elements.fullArticleBtn) {
+      elements.modalTitle.textContent = post.title;
+      elements.modalBody.innerHTML = post.description || post.content || 'Нет содержимого';
+      elements.fullArticleBtn.href = post.link;
+      
+      // Помечаем пост как просмотренный
+      viewedPostIds.add(post.id);
+      
+      // Обновляем отображение поста
+      updatePostViewStatus(post.id);
+      
+      elements.modal.show();
+    }
+  };
+
+  // Обновление статуса просмотра поста
+  const updatePostViewStatus = (postId) => {
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (postElement) {
+      const titleElement = postElement.querySelector('.post-title');
+      if (titleElement) {
+        titleElement.classList.add('fw-bold');
+        titleElement.classList.remove('fw-normal');
+      }
+    }
+  };
+
+  // Рендер постов
+  const renderPosts = () => {
+    createContainers();
+    const container = elements.postsContainer;
+    if (!container) return;
+
+    const t = translations[currentLang];
+
+    if (posts.length === 0) {
+      container.innerHTML = `<p class="text-muted">${t.postsEmpty}</p>`;
+      return;
+    }
+
+    const list = document.createElement("div");
+    list.className = "list-group";
+
+    posts.forEach((post) => {
+      const feed = feeds.find((f) => f.id === post.feedId);
+      const isViewed = viewedPostIds.has(post.id);
+      
+      const item = document.createElement("div");
+      item.className = "list-group-item";
+      item.dataset.postId = post.id;
+      item.innerHTML = `
+        <div class="d-flex w-100 justify-content-between align-items-start">
+          <div class="me-3 flex-grow-1">
+            <a href="${post.link}" target="_blank" rel="noopener noreferrer" 
+               class="text-decoration-none post-title-link" data-post-id="${post.id}">
+              <h6 class="mb-1 post-title ${isViewed ? 'fw-bold' : 'fw-normal'}">${post.title}</h6>
+            </a>
+            <p class="mb-1 small text-muted">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? '...' : '') : ''}</p>
+            <small class="text-muted">${feed ? feed.title : ''}</small>
+          </div>
+          <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
+            ${t.viewButton}
+          </button>
+        </div>
+      `;
+      
+      list.appendChild(item);
+    });
+
+    container.innerHTML = "";
+    container.appendChild(list);
+
+    // Добавляем обработчики кликов на кнопки просмотра
+    container.querySelectorAll('.view-post-btn').forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        const postId = e.currentTarget.dataset.postId;
+        const post = posts.find(p => p.id === postId);
+        if (post) {
+          openPostModal(post);
+        }
+      });
+    });
+
+    // Добавляем обработчики кликов на ссылки постов (для теста)
+    container.querySelectorAll('.post-title-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const postId = e.currentTarget.dataset.postId;
+        viewedPostIds.add(postId);
+        updatePostViewStatus(postId);
+        
+        // Также открываем ссылку в новой вкладке
+        const post = posts.find(p => p.id === postId);
+        if (post && post.link && post.link !== '#') {
+          window.open(post.link, '_blank', 'noopener,noreferrer');
+        }
+      });
+    });
+
+    // Также добавляем обработчики на сами заголовки (на всякий случай)
+    container.querySelectorAll('.post-title').forEach(title => {
+      title.addEventListener('click', (e) => {
+        e.preventDefault();
+        const linkElement = e.target.closest('.post-title-link');
+        if (linkElement) {
+          const postId = linkElement.dataset.postId;
+          viewedPostIds.add(postId);
+          updatePostViewStatus(postId);
+        }
+      });
+    });
+  };
+
+  // Обработчик переключения языка
+  if (elements.languageSwitcher) {
+    elements.languageSwitcher.addEventListener("change", (e) => {
+      currentLang = e.target.value;
+      updateUI();
+    });
+  }
+
+  // Инициализация UI
+  createModal();
+  updateUI();
+
+  // Запускаем автообновление
+  scheduleNextUpdate();
+
+  // Обработчик формы
+  if (elements.rssForm) {
+    elements.rssForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const url = elements.input.value.trim();
-      state.ui.form.url = url;
-      state.ui.form.state = "sending";
-      renderForm();
+      const url = elements.urlInput.value.trim();
+      const t = translations[currentLang];
+
+      // Сбрасываем предыдущие состояния
+      elements.urlInput.classList.remove("is-invalid", "is-valid");
+      elements.urlFeedback.classList.remove(
+        "text-danger",
+        "text-success",
+        "text-info",
+      );
+      elements.submitBtn.disabled = true;
+      elements.submitBtn.innerHTML = `
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        ${t.status.loading}
+      `;
 
       // Валидация
-      const error = validateUrl(url);
-      if (error) {
-        state.ui.form.state = "error";
-        state.ui.form.error = error;
-        renderForm();
+      if (!url) {
+        showError(t.feedback.required);
+        resetButton();
         return;
       }
 
       try {
-        // Загрузка RSS
-        const content = await fetchRSS(url);
+        new URL(url);
+      } catch {
+        showError(t.feedback.url);
+        resetButton();
+        return;
+      }
 
-        // Парсинг
-        const { feed, posts } = parseRSS(content);
+      // Проверка на дубликаты
+      if (feeds.some((feed) => feed.url === url)) {
+        showError(t.feedback.duplicate);
+        resetButton();
+        return;
+      }
 
-        // Обновление состояния
-        state.feeds.push(feed);
-        state.posts.push(...posts);
-        state.ui.form.state = "success";
-        state.ui.form.error = null;
+      try {
+        // Показываем статус загрузки
+        elements.urlFeedback.classList.add("text-info");
+        elements.urlFeedback.textContent = t.status.loading;
 
-        // Очистка формы
-        elements.input.value = "";
+        // Скачиваем RSS
+        const rssContent = await fetchRSS(url);
 
-        // Обновление UI
-        renderForm();
-        renderFeeds();
-        renderPosts();
+        // Парсим RSS
+        const parsedData = parseRSS(rssContent);
+
+        // Добавляем URL к фиду
+        const feedWithUrl = {
+          ...parsedData.feed,
+          url,
+        };
+
+        // Добавляем фид и посты
+        feeds.push(feedWithUrl);
+        posts.push(...parsedData.posts);
+
+        // Сортируем посты (новые сверху)
+        posts.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+
+        // Успех
+        showSuccess(t.feedback.success);
+        elements.urlInput.value = "";
+        elements.urlInput.focus();
+
+        // Обновляем интерфейс
+        updateUI();
       } catch (error) {
-        state.ui.form.state = "error";
-        state.ui.form.error = error.message;
-        renderForm();
+        console.error("Error:", error.message);
+
+        // Определяем тип ошибки
+        let errorKey = "unknown";
+        const errorMsg = error.message.toLowerCase();
+
+        if (
+          errorMsg.includes("network") ||
+          errorMsg.includes("timeout") ||
+          errorMsg.includes("notfound")
+        ) {
+          errorKey = "network";
+        } else if (
+          errorMsg.includes("parse") ||
+          errorMsg.includes("nochannel")
+        ) {
+          errorKey = "parse";
+        } else if (
+          errorMsg.includes("invalid") ||
+          errorMsg.includes("response")
+        ) {
+          errorKey = "invalid";
+        } else if (
+          errorMsg.includes("duplicate") ||
+          errorMsg.includes("already exists")
+        ) {
+          errorKey = "duplicate";
+        } else if (
+          errorMsg.includes("required") ||
+          errorMsg.includes("empty")
+        ) {
+          errorKey = "required";
+        } else if (errorMsg.includes("url") || errorMsg.includes("valid")) {
+          errorKey = "url";
+        }
+
+        showError(t.feedback[errorKey]);
+      } finally {
+        resetButton();
       }
     });
+  }
 
-    // Очистка ошибки при вводе
-    elements.input.addEventListener("input", () => {
-      if (state.ui.form.state === "error") {
-        state.ui.form.state = "filling";
-        state.ui.form.error = null;
-        renderForm();
+  // Функции показа сообщений
+  function showError(message) {
+    elements.urlInput.classList.add("is-invalid");
+    elements.urlFeedback.classList.add("text-danger");
+    elements.urlFeedback.textContent = message;
+  }
+
+  function showSuccess(message) {
+    elements.urlInput.classList.add("is-valid");
+    elements.urlFeedback.classList.add("text-success");
+    elements.urlFeedback.textContent = message;
+
+    setTimeout(() => {
+      elements.urlInput.classList.remove("is-valid");
+      elements.urlFeedback.classList.remove("text-success");
+      elements.urlFeedback.textContent = "";
+    }, 3000);
+  }
+
+  function resetButton() {
+    elements.submitBtn.disabled = false;
+    elements.submitBtn.innerHTML = translations[currentLang].formSubmit;
+  }
+
+  // Сброс ошибки при вводе
+  if (elements.urlInput) {
+    elements.urlInput.addEventListener("input", () => {
+      if (elements.urlInput.classList.contains("is-invalid")) {
+        elements.urlInput.classList.remove("is-invalid");
+        elements.urlFeedback.classList.remove("text-danger");
+        elements.urlFeedback.textContent = "";
       }
     });
-
-    // Переключатель языка
-    if (elements.languageSwitcher) {
-      elements.languageSwitcher.addEventListener("change", (e) => {
-        state.ui.language = e.target.value;
-        updateTitles();
-        renderForm();
-        renderFeeds();
-        renderPosts();
-      });
-    }
-  };
-
-  // Запуск
-  init();
+  }
 };
 
-// Запуск при загрузке DOM
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", app);
-} else {
-  app();
-}
+document.addEventListener("DOMContentLoaded", app);
