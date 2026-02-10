@@ -27,24 +27,67 @@ body {
   border-bottom: none;
 }
 
-.post-link {
-  color: inherit;
+.post-title {
+  color: #212529;
   text-decoration: none;
+  font-size: 1.1rem;
+  display: block;
+  margin-bottom: 0.5rem;
 }
 
-.post-link:hover {
+.post-title:hover {
+  color: #0d6efd;
   text-decoration: underline;
 }
 
-.fw-bold {
+.post-title.fw-bold {
   font-weight: 600 !important;
 }
 
-.fw-normal {
+.post-title.fw-normal {
   font-weight: 400 !important;
 }
 
 .view-btn {
   white-space: nowrap;
   min-width: 80px;
+  flex-shrink: 0;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+.form-control.is-valid {
+  border-color: #198754;
+}
+
+.form-control.is-invalid {
+  border-color: #dc3545;
+}
+
+.text-success {
+  color: #198754 !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.spinner-border {
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+#feeds-title, #posts-title {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.modal-body {
+  max-height: 60vh;
+  overflow-y: auto;
+  line-height: 1.6;
 }

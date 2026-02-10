@@ -9,18 +9,16 @@
 <body>
   <div class="container mt-5">
     <h1 class="text-center mb-4" id="app-title">RSS агрегатор</h1>
-    
-    <!-- Переключатель языка -->
+
     <div class="text-end mb-3">
       <select class="form-select form-select-sm w-auto d-inline-block" id="language-switcher">
         <option value="ru" selected>Русский</option>
         <option value="en">English</option>
       </select>
     </div>
-    
+
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8">
-        <!-- Форма -->
         <form id="rss-form" class="mb-4">
           <div class="mb-3">
             <label for="url-input" class="form-label" id="form-label">RSS ссылка</label>
@@ -33,7 +31,6 @@
                 placeholder="https://example.com/rss"
                 required
                 autofocus
-                aria-label="url"
                 title="Пожалуйста, заполните это поле"
               >
               <button class="btn btn-primary" type="submit" id="submit-btn">
@@ -46,20 +43,18 @@
             <div class="form-text mt-1" id="url-feedback"></div>
           </div>
         </form>
-        
-        <!-- Фиды -->
+
         <div id="feeds-section" class="mt-4">
           <div id="feeds-container" class="mt-3"></div>
         </div>
-        
-        <!-- Посты -->
+
         <div id="posts-section" class="mt-4">
           <div id="posts-container" class="mt-3"></div>
         </div>
       </div>
     </div>
   </div>
-  
+
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
