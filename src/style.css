@@ -13,21 +13,17 @@ body {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.list-group-item {
-  border-left: none;
-  border-right: none;
-  padding: 15px;
+.card {
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
 }
 
-.list-group-item:first-child {
-  border-top: none;
+.card-body {
+  padding: 1rem;
 }
 
-.list-group-item:last-child {
-  border-bottom: none;
-}
-
-.post-title {
+.card-body a {
   color: #212529;
   text-decoration: none;
   font-size: 1.1rem;
@@ -35,17 +31,14 @@ body {
   margin-bottom: 0.5rem;
 }
 
-.post-title:hover {
+.card-body a:hover {
   color: #0d6efd;
   text-decoration: underline;
 }
 
-.post-title.fw-bold {
+.card-body a.fw-bold {
   font-weight: 600 !important;
-}
-
-.post-title:not(.fw-bold) {
-  font-weight: 400;
+  color: #212529;
 }
 
 .view-btn {
@@ -58,6 +51,7 @@ body {
   color: #6c757d !important;
 }
 
+/* Форма */
 .form-control.is-valid {
   border-color: #198754;
 }
@@ -74,11 +68,13 @@ body {
   color: #dc3545 !important;
 }
 
+/* Спиннер */
 .spinner-border {
   vertical-align: middle;
   margin-right: 8px;
 }
 
+/* Заголовки разделов */
 #feeds-title, #posts-title {
   margin-top: 2rem;
   margin-bottom: 1rem;
@@ -86,8 +82,10 @@ body {
   border-bottom: 1px solid #dee2e6;
 }
 
+/* Модальное окно */
 .modal-body {
   max-height: 60vh;
   overflow-y: auto;
   line-height: 1.6;
+  white-space: pre-wrap;
 }

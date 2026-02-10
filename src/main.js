@@ -7,11 +7,14 @@ const app = () => {
     posts: [],
     ui: {
       form: {
-        state: 'filling',
+        state: 'filling', // filling, sending, success, error
         error: null,
         url: '',
+        valid: true,
       },
-      viewedPostIds: new Set(),
+      posts: {
+        viewedIds: new Set(),
+      },
       language: 'ru',
     },
   };
@@ -79,8 +82,11 @@ const app = () => {
     },
   };
 
+  // Валидация URL
   const validateUrl = (url) => {
-    if (!url.trim()) return 'required';
+    if (!url.trim()) {
+      return 'required';
+    }
     
     try {
       new URL(url);
@@ -88,19 +94,27 @@ const app = () => {
       return 'url';
     }
     
-    if (state.feeds.some(feed => feed.url === url)) return 'duplicate';
+    if (state.feeds.some(feed => feed.url === url)) {
+      return 'duplicate';
+    }
     
     return null;
   };
 
+  // Парсинг RSS
   const parseRSS = (content) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(content, 'text/xml');
     
-    if (doc.querySelector('parsererror')) throw new Error('parse');
+    const error = doc.querySelector('parsererror');
+    if (error) {
+      throw new Error('parse');
+    }
     
     const channel = doc.querySelector('channel');
-    if (!channel) throw new Error('parse');
+    if (!channel) {
+      throw new Error('parse');
+    }
     
     const getText = (el, selector) => {
       const found = el.querySelector(selector);
@@ -117,18 +131,26 @@ const app = () => {
     
     const items = Array.from(doc.querySelectorAll('item'));
     const posts = items.map((item, index) => {
+      const title = getText(item, 'title') || 'Без названия';
+      const link = getText(item, 'link') || '#';
+      const description = getText(item, 'description') || '';
+      const pubDate = getText(item, 'pubDate') || '';
+      
       return {
         id: `post-${feedId}-${index}`,
         feedId,
-        title: getText(item, 'title') || 'Без названия',
-        link: getText(item, 'link') || '#',
-        description: getText(item, 'description') || '',
+        title,
+        link,
+        description,
+        pubDate,
+        viewed: false,
       };
     });
     
     return { feed, posts };
   };
 
+  // Загрузка RSS через прокси
   const fetchRSS = async (url) => {
     try {
       const proxyUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
@@ -137,16 +159,21 @@ const app = () => {
         validateStatus: () => true
       });
       
-      if (response.status !== 200 || !response.data?.contents) {
+      if (response.status !== 200) {
+        throw new Error('network');
+      }
+      
+      if (!response.data?.contents) {
         throw new Error('network');
       }
       
       return response.data.contents;
-    } catch {
+    } catch (error) {
       throw new Error('network');
     }
   };
 
+  // Обновление UI формы
   const renderForm = () => {
     const t = i18n[state.ui.language];
     
@@ -168,6 +195,10 @@ const app = () => {
         break;
         
       case 'success':
+        elements.submit.disabled = false;
+        elements.submit.textContent = t.formSubmit;
+        break;
+        
       case 'error':
         elements.submit.disabled = false;
         elements.submit.textContent = t.formSubmit;
@@ -193,6 +224,7 @@ const app = () => {
     }
   };
 
+  // Рендер фидов
   const renderFeeds = () => {
     const t = i18n[state.ui.language];
     const container = elements.feedsContainer;
@@ -200,27 +232,26 @@ const app = () => {
     if (!container) return;
     
     if (state.feeds.length === 0) {
-      container.innerHTML = `<p class="text-muted">${t.feedsEmpty}</p>`;
+      container.innerHTML = `<div class="card border-0"><div class="card-body"><p class="text-muted mb-0">${t.feedsEmpty}</p></div></div>`;
       return;
     }
     
-    const list = document.createElement('div');
-    list.className = 'list-group';
+    container.innerHTML = '';
     
     state.feeds.forEach(feed => {
-      const item = document.createElement('div');
-      item.className = 'list-group-item';
-      item.innerHTML = `
-        <h5 class="mb-1">${feed.title}</h5>
-        <p class="mb-1 text-muted small">${feed.description}</p>
+      const feedCard = document.createElement('div');
+      feedCard.className = 'card border-0 mb-3';
+      feedCard.innerHTML = `
+        <div class="card-body">
+          <h5 class="card-title">${feed.title}</h5>
+          <p class="card-text text-muted small">${feed.description}</p>
+        </div>
       `;
-      list.appendChild(item);
+      container.appendChild(feedCard);
     });
-    
-    container.innerHTML = '';
-    container.appendChild(list);
   };
 
+  // Рендер постов
   const renderPosts = () => {
     const t = i18n[state.ui.language];
     const container = elements.postsContainer;
@@ -228,86 +259,104 @@ const app = () => {
     if (!container) return;
     
     if (state.posts.length === 0) {
-      container.innerHTML = `<p class="text-muted">${t.postsEmpty}</p>`;
+      container.innerHTML = `<div class="card border-0"><div class="card-body"><p class="text-muted mb-0">${t.postsEmpty}</p></div></div>`;
       return;
     }
     
-    const list = document.createElement('div');
-    list.className = 'list-group';
-    
-    state.posts.forEach(post => {
-      const isViewed = state.ui.viewedPostIds.has(post.id);
-      
-      const item = document.createElement('div');
-      item.className = 'list-group-item';
-      item.innerHTML = `
-        <div class="d-flex w-100 justify-content-between align-items-start">
-          <div class="me-3 flex-grow-1">
-            <a href="${post.link}" target="_blank" rel="noopener noreferrer" 
-               class="text-decoration-none post-title ${isViewed ? 'fw-bold' : 'fw-normal'}" 
-               data-post-id="${post.id}">
-              ${post.title}
-            </a>
-            <p class="mb-1 small text-muted">${post.description.substring(0, 100)}${post.description.length > 100 ? '...' : ''}</p>
-            <!-- УБРАЛИ ОТОБРАЖЕНИЕ НАЗВАНИЯ ФИДА -->
-          </div>
-          <button type="button" class="btn btn-outline-primary btn-sm view-btn" data-post-id="${post.id}">
-            ${t.viewButton}
-          </button>
-        </div>
-      `;
-      list.appendChild(item);
+    // Сортируем посты
+    const sortedPosts = [...state.posts].sort((a, b) => {
+      if (a.pubDate && b.pubDate) {
+        return new Date(b.pubDate) - new Date(a.pubDate);
+      }
+      return 0;
     });
     
     container.innerHTML = '';
-    container.appendChild(list);
     
-    container.querySelectorAll('.post-title').forEach(link => {
+    sortedPosts.forEach(post => {
+      const isViewed = state.ui.posts.viewedIds.has(post.id);
+      
+      const postCard = document.createElement('div');
+      postCard.className = 'card border-0 mb-3';
+      postCard.innerHTML = `
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+              <a href="${post.link}" target="_blank" rel="noopener noreferrer" 
+                 class="${isViewed ? 'fw-bold' : ''}" 
+                 data-post-id="${post.id}">
+                ${post.title}
+              </a>
+              <div class="mt-2 small text-muted">${post.description.substring(0, 200)}${post.description.length > 200 ? '...' : ''}</div>
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm ms-3 view-btn" data-post-id="${post.id}">
+              ${t.viewButton}
+            </button>
+          </div>
+        </div>
+      `;
+      container.appendChild(postCard);
+    });
+    
+    // Обработчики для ссылок постов
+    container.querySelectorAll('a[data-post-id]').forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
         const postId = e.currentTarget.dataset.postId;
-        state.ui.viewedPostIds.add(postId);
-        renderPosts();
+        state.ui.posts.viewedIds.add(postId);
         
+        // Обновляем класс
+        e.currentTarget.classList.add('fw-bold');
+        e.currentTarget.classList.remove('fw-normal');
+        
+        // Показываем модальное окно
         const post = state.posts.find(p => p.id === postId);
         if (post) {
-          const modal = new bootstrap.Modal(document.getElementById('postModal') || createModal());
-          const modalTitle = document.getElementById('postModalLabel');
-          const modalBody = document.querySelector('#postModal .modal-body');
-          const fullArticleBtn = document.querySelector('#postModal .btn-primary');
-          
-          if (modalTitle) modalTitle.textContent = post.title;
-          if (modalBody) modalBody.textContent = post.description;
-          if (fullArticleBtn) fullArticleBtn.href = post.link;
-          
-          modal.show();
+          openPostModal(post);
         }
       });
     });
     
+    // Обработчики для кнопок просмотра
     container.querySelectorAll('.view-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const postId = e.currentTarget.dataset.postId;
-        state.ui.viewedPostIds.add(postId);
-        renderPosts();
-        
         const post = state.posts.find(p => p.id === postId);
         if (post) {
-          const modal = new bootstrap.Modal(document.getElementById('postModal') || createModal());
-          const modalTitle = document.getElementById('postModalLabel');
-          const modalBody = document.querySelector('#postModal .modal-body');
-          const fullArticleBtn = document.querySelector('#postModal .btn-primary');
+          state.ui.posts.viewedIds.add(postId);
           
-          if (modalTitle) modalTitle.textContent = post.title;
-          if (modalBody) modalBody.textContent = post.description;
-          if (fullArticleBtn) fullArticleBtn.href = post.link;
+          // Обновляем ссылку поста
+          const postLink = e.currentTarget.closest('.card-body').querySelector('a[data-post-id]');
+          if (postLink) {
+            postLink.classList.add('fw-bold');
+            postLink.classList.remove('fw-normal');
+          }
           
-          modal.show();
+          // Показываем модальное окно
+          openPostModal(post);
         }
       });
     });
   };
 
+  // Открытие модального окна
+  const openPostModal = (post) => {
+    const modal = new bootstrap.Modal(document.getElementById('postModal') || createModal());
+    const modalTitle = document.getElementById('postModalLabel');
+    const modalBody = document.querySelector('#postModal .modal-body');
+    const fullArticleBtn = document.querySelector('#postModal .btn-primary');
+    
+    if (modalTitle) modalTitle.textContent = post.title;
+    if (modalBody) modalBody.textContent = post.description;
+    if (fullArticleBtn) {
+      fullArticleBtn.href = post.link;
+      fullArticleBtn.textContent = state.ui.language === 'ru' ? 'Читать полностью' : 'Read full article';
+    }
+    
+    modal.show();
+  };
+
+  // Создание модального окна
   const createModal = () => {
     const modalHTML = `
       <div class="modal fade" id="postModal" tabindex="-1" aria-labelledby="postModalLabel" aria-hidden="true">
@@ -331,18 +380,23 @@ const app = () => {
     return document.getElementById('postModal');
   };
 
+  // Обновление заголовков
   const updateTitles = () => {
     const t = i18n[state.ui.language];
     
+    // Заголовок приложения
     const appTitle = document.getElementById('app-title');
     if (appTitle) appTitle.textContent = t.appTitle;
     
+    // Заголовок формы
     const formLabel = document.getElementById('form-label');
     if (formLabel) formLabel.textContent = t.formLabel;
     
+    // Подсказка формы
     const formHelp = document.getElementById('form-help');
     if (formHelp) formHelp.textContent = t.formHelp;
     
+    // Заголовки разделов
     const feedsSection = document.getElementById('feeds-section');
     const postsSection = document.getElementById('posts-section');
     
@@ -369,13 +423,18 @@ const app = () => {
     }
   };
 
+  // Инициализация
   const init = () => {
+    // Создаем модальное окно
     createModal();
+    
+    // Обновляем UI
     updateTitles();
     renderForm();
     renderFeeds();
     renderPosts();
     
+    // Обработчик формы
     elements.form.addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -384,6 +443,7 @@ const app = () => {
       state.ui.form.state = 'sending';
       renderForm();
       
+      // Валидация
       const error = validateUrl(url);
       if (error) {
         state.ui.form.state = 'error';
@@ -393,16 +453,22 @@ const app = () => {
       }
       
       try {
+        // Загрузка RSS
         const content = await fetchRSS(url);
+        
+        // Парсинг
         const { feed, posts } = parseRSS(content);
         
+        // Обновление состояния
         state.feeds.push(feed);
         state.posts.push(...posts);
         state.ui.form.state = 'success';
         state.ui.form.error = null;
         
+        // Очистка формы
         elements.input.value = '';
         
+        // Обновление UI
         renderForm();
         renderFeeds();
         renderPosts();
@@ -414,6 +480,7 @@ const app = () => {
       }
     });
     
+    // Очистка ошибки при вводе
     elements.input.addEventListener('input', () => {
       if (state.ui.form.state === 'error') {
         state.ui.form.state = 'filling';
@@ -422,6 +489,7 @@ const app = () => {
       }
     });
     
+    // Переключатель языка
     if (elements.languageSwitcher) {
       elements.languageSwitcher.addEventListener('change', (e) => {
         state.ui.language = e.target.value;
@@ -433,9 +501,11 @@ const app = () => {
     }
   };
 
+  // Запуск
   init();
 };
 
+// Запуск при загрузке DOM
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', app);
 } else {
