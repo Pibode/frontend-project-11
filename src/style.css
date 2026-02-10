@@ -33,6 +33,7 @@ body {
   font-size: 1.1rem;
   display: block;
   margin-bottom: 0.5rem;
+  cursor: pointer;
 }
 
 .post-title:hover {
@@ -42,10 +43,6 @@ body {
 
 .post-title.fw-bold {
   font-weight: 600 !important;
-}
-
-.post-title.fw-normal {
-  font-weight: 400 !important;
 }
 
 .view-btn {
