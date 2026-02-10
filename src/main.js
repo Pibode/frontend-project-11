@@ -44,8 +44,8 @@ const translations = {
       url: "Link must be a valid URL",
       duplicate: "RSS already exists",
       network: "Network error",
-      parse: "The resource does not contain valid RSS", // ИЗМЕНЕНО!
-      invalid: "The resource does not contain valid RSS", // ИЗМЕНЕНО!
+      parse: "The resource does not contain valid RSS",
+      invalid: "The resource does not contain valid RSS",
       unknown: "Unknown error",
     },
     status: {
