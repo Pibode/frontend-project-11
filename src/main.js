@@ -13,9 +13,7 @@ const app = () => {
         valid: true,
       },
       posts: {
-        viewedIds: new Set(
-          JSON.parse(localStorage.getItem("viewedPosts") || "[]"),
-        ),
+        viewedIds: new Set(),
       },
       language: "ru",
     },
@@ -137,16 +135,14 @@ const app = () => {
       const link = getText(item, "link") || "#";
       const description = getText(item, "description") || "";
       const pubDate = getText(item, "pubDate") || "";
-      const guid = getText(item, "guid") || `${feedId}-${index}`;
 
       return {
-        id: guid,
+        id: `post-${feedId}-${index}`,
         feedId,
         title,
         link,
         description,
         pubDate,
-        viewed: state.ui.posts.viewedIds.has(guid),
       };
     });
 
@@ -174,14 +170,6 @@ const app = () => {
     } catch (error) {
       throw new Error("network");
     }
-  };
-
-  // Сохранение просмотренных постов в localStorage
-  const saveViewedPosts = () => {
-    localStorage.setItem(
-      "viewedPosts",
-      JSON.stringify([...state.ui.posts.viewedIds]),
-    );
   };
 
   // Обновление UI формы
@@ -313,22 +301,13 @@ const app = () => {
       container.appendChild(postCard);
     });
 
-    // Обработчики для ссылок постов
+    // Обработчики для ссылок постов (для теста: делаем жирным при клике на саму ссылку)
     container.querySelectorAll("a[data-post-id]").forEach((link) => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
         const postId = e.currentTarget.dataset.postId;
-        state.ui.posts.viewedIds.add(postId);
-        saveViewedPosts();
-
-        // Обновляем класс
-        e.currentTarget.classList.add("fw-bold");
-
-        // Показываем модальное окно
-        const post = state.posts.find((p) => p.id === postId);
-        if (post) {
-          openPostModal(post);
-        }
+        markPostAsViewed(postId);
+        openPostModal(state.posts.find((p) => p.id === postId));
       });
     });
 
@@ -338,26 +317,28 @@ const app = () => {
         const postId = e.currentTarget.dataset.postId;
         const post = state.posts.find((p) => p.id === postId);
         if (post) {
-          state.ui.posts.viewedIds.add(postId);
-          saveViewedPosts();
-
-          // Обновляем ссылку поста
-          const postLink = e.currentTarget
-            .closest(".card-body")
-            .querySelector("a[data-post-id]");
-          if (postLink) {
-            postLink.classList.add("fw-bold");
-          }
-
-          // Показываем модальное окно
+          markPostAsViewed(postId);
           openPostModal(post);
         }
       });
     });
   };
 
+  // Пометить пост как просмотренный
+  const markPostAsViewed = (postId) => {
+    state.ui.posts.viewedIds.add(postId);
+
+    // Обновляем UI
+    const link = document.querySelector(`a[data-post-id="${postId}"]`);
+    if (link) {
+      link.classList.add("fw-bold");
+    }
+  };
+
   // Открытие модального окна
   const openPostModal = (post) => {
+    if (!post) return;
+
     const modal = new bootstrap.Modal(
       document.getElementById("postModal") || createModal(),
     );
