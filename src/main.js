@@ -1,5 +1,5 @@
 import "./style.css";
-import axios from "axios";
+import axios from 'axios';
 import { fetchRSS, checkForUpdates } from "./lib/rssService.js";
 import parseRSS, { getNewPosts } from "./lib/parser/rssParser.js";
 
@@ -102,13 +102,13 @@ const app = () => {
       </div>
     `;
 
-    document.body.insertAdjacentHTML("beforeend", modalHTML);
-
-    elements.modal = new bootstrap.Modal(document.getElementById("postModal"));
-    elements.modalTitle = document.getElementById("postModalLabel");
-    elements.modalBody = document.querySelector("#postModal .modal-body");
-    elements.modalClose = document.querySelector("#postModal .btn-close");
-    elements.fullArticleBtn = document.querySelector("#postModal .btn-primary");
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    elements.modal = new bootstrap.Modal(document.getElementById('postModal'));
+    elements.modalTitle = document.getElementById('postModalLabel');
+    elements.modalBody = document.querySelector('#postModal .modal-body');
+    elements.modalClose = document.querySelector('#postModal .btn-close');
+    elements.fullArticleBtn = document.querySelector('#postModal .btn-primary');
   };
 
   // Функция обновления всех RSS потоков
@@ -118,7 +118,6 @@ const app = () => {
       return;
     }
 
-    console.log("Checking for RSS updates...");
     let hasNewPosts = false;
 
     // Проверяем каждый фид
@@ -131,8 +130,6 @@ const app = () => {
         const newPosts = getNewPosts(parsedData, posts);
 
         if (newPosts.length > 0) {
-          console.log(`Found ${newPosts.length} new posts in ${feed.title}`);
-
           const postsWithFeedId = newPosts.map((post) => ({
             ...post,
             feedId: feed.id,
@@ -284,24 +281,23 @@ const app = () => {
   const openPostModal = (post) => {
     if (elements.modalTitle && elements.modalBody && elements.fullArticleBtn) {
       elements.modalTitle.textContent = post.title;
-      elements.modalBody.innerHTML =
-        post.description || post.content || "Нет содержимого";
+      elements.modalBody.innerHTML = post.description || post.content || 'Нет содержимого';
       elements.fullArticleBtn.href = post.link;
-      elements.fullArticleBtn.textContent =
-        currentLang === "ru" ? "Читать полностью" : "Read full article";
-
+      elements.fullArticleBtn.textContent = currentLang === 'ru' ? 'Читать полностью' : 'Read full article';
+      
       // Помечаем пост как просмотренный
       viewedPostIds.add(post.id);
-
+      
       // Обновляем отображение поста
       const postElement = document.querySelector(`[data-post-id="${post.id}"]`);
       if (postElement) {
-        const titleElement = postElement.querySelector(".post-title");
+        const titleElement = postElement.querySelector('.post-title');
         if (titleElement) {
-          titleElement.classList.add("fw-bold");
+          titleElement.classList.add('fw-bold');
+          titleElement.classList.remove('fw-normal');
         }
       }
-
+      
       elements.modal.show();
     }
   };
@@ -325,25 +321,25 @@ const app = () => {
     posts.forEach((post) => {
       const feed = feeds.find((f) => f.id === post.feedId);
       const isViewed = viewedPostIds.has(post.id);
-
+      
       const item = document.createElement("div");
       item.className = "list-group-item";
       item.dataset.postId = post.id;
       item.innerHTML = `
         <div class="d-flex w-100 justify-content-between align-items-start">
           <div class="me-3 flex-grow-1">
-            <a href="${post.link}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
-              <h6 class="mb-1 post-title ${isViewed ? "fw-bold" : "fw-normal"}">${post.title}</h6>
+            <a href="${post.link}" target="_blank" rel="noopener noreferrer" class="text-decoration-none post-title-link" data-post-id="${post.id}">
+              <h6 class="mb-1 post-title ${isViewed ? 'fw-bold' : 'fw-normal'}">${post.title}</h6>
             </a>
-            <p class="mb-1 small text-muted">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
-            <small class="text-muted">${feed ? feed.title : ""}</small>
+            <p class="mb-1 small text-muted">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? '...' : '') : ''}</p>
+            <small class="text-muted">${feed ? feed.title : ''}</small>
           </div>
           <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
             ${t.viewButton}
           </button>
         </div>
       `;
-
+      
       list.appendChild(item);
     });
 
@@ -351,29 +347,29 @@ const app = () => {
     container.appendChild(list);
 
     // Добавляем обработчики кликов на кнопки просмотра
-    document.querySelectorAll(".view-post-btn").forEach((button) => {
-      button.addEventListener("click", (e) => {
+    document.querySelectorAll('.view-post-btn').forEach(button => {
+      button.addEventListener('click', (e) => {
         e.preventDefault();
         const postId = e.currentTarget.dataset.postId;
-        const post = posts.find((p) => p.id === postId);
+        const post = posts.find(p => p.id === postId);
         if (post) {
           openPostModal(post);
         }
       });
     });
 
-    // Добавляем обработчики кликов на заголовки постов (для теста)
-    document.querySelectorAll(".post-title").forEach((title) => {
-      title.addEventListener("click", (e) => {
+    // Добавляем обработчики кликов на заголовки постов
+    document.querySelectorAll('.post-title-link').forEach(link => {
+      link.addEventListener('click', (e) => {
         e.preventDefault();
-        const postElement = e.target.closest("[data-post-id]");
-        if (postElement) {
-          const postId = postElement.dataset.postId;
-          const post = posts.find((p) => p.id === postId);
-          if (post) {
-            viewedPostIds.add(postId);
-            e.target.classList.add("fw-bold");
-            e.target.classList.remove("fw-normal");
+        const postId = e.currentTarget.dataset.postId;
+        const post = posts.find(p => p.id === postId);
+        if (post) {
+          viewedPostIds.add(postId);
+          const titleElement = e.currentTarget.querySelector('.post-title');
+          if (titleElement) {
+            titleElement.classList.add('fw-bold');
+            titleElement.classList.remove('fw-normal');
           }
         }
       });
@@ -525,11 +521,12 @@ const app = () => {
     elements.urlFeedback.classList.add("text-success");
     elements.urlFeedback.textContent = message;
 
-    setTimeout(() => {
-      elements.urlInput.classList.remove("is-valid");
-      elements.urlFeedback.classList.remove("text-success");
-      elements.urlFeedback.textContent = "";
-    }, 3000);
+    // НЕ скрываем сообщение через таймаут для тестов
+    // setTimeout(() => {
+    //   elements.urlInput.classList.remove("is-valid");
+    //   elements.urlFeedback.classList.remove("text-success");
+    //   elements.urlFeedback.textContent = "";
+    // }, 3000);
   }
 
   function resetButton() {
