@@ -12,7 +12,7 @@ const parseRSS = (xmlString) => {
   // Извлекаем данные фида
   const channel = xmlDoc.querySelector("channel");
   if (!channel) {
-    throw new Error("parseError");
+    throw new Error("noChannel");
   }
 
   const getText = (element, selector) => {
@@ -21,7 +21,7 @@ const parseRSS = (xmlString) => {
   };
 
   const feed = {
-    id: `feed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: `feed-${Date.now()}`,
     title: getText(channel, "title") || "Без названия",
     description: getText(channel, "description") || "",
   };
@@ -39,19 +39,12 @@ const parseRSS = (xmlString) => {
       }
     }
 
-    const guid = getText(item, "guid");
-    const pubDate = getText(item, "pubDate");
-
     return {
-      id:
-        guid ||
-        `post-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `post-${Date.now()}-${index}`,
       feedId: feed.id,
       title,
       link: link || "#",
-      description:
-        getText(item, "description") || getText(item, "content:encoded") || "",
-      pubDate: pubDate || new Date().toISOString(),
+      description: getText(item, "description") || "",
     };
   });
 
