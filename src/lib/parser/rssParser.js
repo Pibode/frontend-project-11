@@ -12,7 +12,7 @@ const parseRSS = (xmlString) => {
   // Извлекаем данные фида
   const channel = xmlDoc.querySelector("channel");
   if (!channel) {
-    throw new Error("noChannel");
+    throw new Error("parseError");
   }
 
   const getText = (element, selector) => {
@@ -20,8 +20,15 @@ const parseRSS = (xmlString) => {
     return el ? el.textContent.trim() : "";
   };
 
+  const getAttribute = (element, selector, attribute) => {
+    const el = element.querySelector(selector);
+    return el && el.getAttribute(attribute)
+      ? el.getAttribute(attribute).trim()
+      : "";
+  };
+
   const feed = {
-    id: `feed-${Date.now()}`,
+    id: `feed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     title: getText(channel, "title") || "Без названия",
     description: getText(channel, "description") || "",
   };
@@ -33,18 +40,36 @@ const parseRSS = (xmlString) => {
 
     let link = getText(item, "link");
     if (!link) {
-      const linkElement = item.querySelector("link");
-      if (linkElement && linkElement.getAttribute("href")) {
-        link = linkElement.getAttribute("href");
+      link = getAttribute(item, "link", "href");
+    }
+    if (!link) {
+      const guid = getText(item, "guid");
+      if (guid && guid.startsWith("http")) {
+        link = guid;
       }
     }
 
+    const guid = getText(item, "guid");
+    const pubDate = getText(item, "pubDate") || getText(item, "dc:date");
+    const description =
+      getText(item, "description") ||
+      getText(item, "content:encoded") ||
+      getText(item, "content") ||
+      "";
+
     return {
-      id: `post-${Date.now()}-${index}`,
+      id:
+        guid ||
+        `post-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
       feedId: feed.id,
       title,
       link: link || "#",
-      description: getText(item, "description") || "",
+      description,
+      content:
+        getText(item, "content:encoded") ||
+        getText(item, "content") ||
+        description,
+      pubDate: pubDate || new Date().toISOString(),
     };
   });
 

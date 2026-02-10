@@ -46,6 +46,12 @@ body {
   color: #495057;
 }
 
+/* Заголовки просмотренных постов */
+.post-title.fw-bold {
+  font-weight: 600 !important;
+  color: #212529;
+}
+
 /* Спиннер */
 .spinner-border {
   vertical-align: middle;
@@ -67,4 +73,21 @@ body {
 
 .text-muted {
   color: #6c757d !important;
+}
+
+/* Модальное окно */
+.modal-body {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.modal-body img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Кнопка просмотра */
+.view-post-btn {
+  white-space: nowrap;
+  min-width: 80px;
 }
