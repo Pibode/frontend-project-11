@@ -1,6 +1,5 @@
 import "./style.css";
 import axios from "axios";
-import * as yup from "yup";
 import { fetchRSS, checkForUpdates } from "./lib/rssService.js";
 import parseRSS, { getNewPosts } from "./lib/parser/rssParser.js";
 
@@ -96,7 +95,7 @@ const app = () => {
             <div class="modal-body"></div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Read full article</a>
+              <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Читать полностью</a>
             </div>
           </div>
         </div>
@@ -286,8 +285,10 @@ const app = () => {
     if (elements.modalTitle && elements.modalBody && elements.fullArticleBtn) {
       elements.modalTitle.textContent = post.title;
       elements.modalBody.innerHTML =
-        post.description || post.content || "No content available";
+        post.description || post.content || "Нет содержимого";
       elements.fullArticleBtn.href = post.link;
+      elements.fullArticleBtn.textContent =
+        currentLang === "ru" ? "Читать полностью" : "Read full article";
 
       // Помечаем пост как просмотренный
       viewedPostIds.add(post.id);
@@ -330,8 +331,10 @@ const app = () => {
       item.dataset.postId = post.id;
       item.innerHTML = `
         <div class="d-flex w-100 justify-content-between align-items-start">
-          <div class="me-3">
-            <h6 class="mb-1 post-title ${isViewed ? "fw-bold" : ""}">${post.title}</h6>
+          <div class="me-3 flex-grow-1">
+            <a href="${post.link}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
+              <h6 class="mb-1 post-title ${isViewed ? "fw-bold" : "fw-normal"}">${post.title}</h6>
+            </a>
             <p class="mb-1 small text-muted">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
             <small class="text-muted">${feed ? feed.title : ""}</small>
           </div>
@@ -358,6 +361,23 @@ const app = () => {
         }
       });
     });
+
+    // Добавляем обработчики кликов на заголовки постов (для теста)
+    document.querySelectorAll(".post-title").forEach((title) => {
+      title.addEventListener("click", (e) => {
+        e.preventDefault();
+        const postElement = e.target.closest("[data-post-id]");
+        if (postElement) {
+          const postId = postElement.dataset.postId;
+          const post = posts.find((p) => p.id === postId);
+          if (post) {
+            viewedPostIds.add(postId);
+            e.target.classList.add("fw-bold");
+            e.target.classList.remove("fw-normal");
+          }
+        }
+      });
+    });
   };
 
   // Обработчик переключения языка
@@ -367,19 +387,6 @@ const app = () => {
       updateUI();
     });
   }
-
-  // Создаем схему валидации
-  const createValidationSchema = () => {
-    return yup.object().shape({
-      url: yup
-        .string()
-        .required("required")
-        .url("url")
-        .test("unique", "duplicate", (value) => {
-          return !feeds.some((feed) => feed.url === value);
-        }),
-    });
-  };
 
   // Инициализация UI
   createModal();
@@ -409,11 +416,29 @@ const app = () => {
         ${t.status.loading}
       `;
 
-      try {
-        // Валидация
-        const schema = createValidationSchema();
-        await schema.validate({ url }, { abortEarly: false });
+      // Валидация
+      if (!url) {
+        showError(t.feedback.required);
+        resetButton();
+        return;
+      }
 
+      try {
+        new URL(url);
+      } catch {
+        showError(t.feedback.url);
+        resetButton();
+        return;
+      }
+
+      // Проверка на дубликаты
+      if (feeds.some((feed) => feed.url === url)) {
+        showError(t.feedback.duplicate);
+        resetButton();
+        return;
+      }
+
+      try {
         // Показываем статус загрузки
         elements.urlFeedback.classList.add("text-info");
         elements.urlFeedback.textContent = t.status.loading;
@@ -445,19 +470,43 @@ const app = () => {
         // Обновляем интерфейс
         updateUI();
       } catch (error) {
-        console.error("Validation/RSS error:", error);
+        console.error("Error:", error.message);
 
-        if (error.name === "ValidationError") {
-          // Ошибка валидации yup
-          const errorType = error.errors[0];
-          showError(t.feedback[errorType] || t.feedback.unknown);
-        } else if (error.message === "parseError") {
-          showError(t.feedback.parse);
-        } else if (error.message === "networkError") {
-          showError(t.feedback.network);
-        } else {
-          showError(t.feedback.unknown);
+        // Определяем тип ошибки
+        let errorKey = "unknown";
+        const errorMsg = error.message.toLowerCase();
+
+        if (
+          errorMsg.includes("network") ||
+          errorMsg.includes("timeout") ||
+          errorMsg.includes("notfound")
+        ) {
+          errorKey = "network";
+        } else if (
+          errorMsg.includes("parse") ||
+          errorMsg.includes("nochannel")
+        ) {
+          errorKey = "parse";
+        } else if (
+          errorMsg.includes("invalid") ||
+          errorMsg.includes("response")
+        ) {
+          errorKey = "invalid";
+        } else if (
+          errorMsg.includes("duplicate") ||
+          errorMsg.includes("already exists")
+        ) {
+          errorKey = "duplicate";
+        } else if (
+          errorMsg.includes("required") ||
+          errorMsg.includes("empty")
+        ) {
+          errorKey = "required";
+        } else if (errorMsg.includes("url") || errorMsg.includes("valid")) {
+          errorKey = "url";
         }
+
+        showError(t.feedback[errorKey]);
       } finally {
         resetButton();
       }
