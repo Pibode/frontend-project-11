@@ -1,5 +1,5 @@
 import "./style.css";
-import axios from "axios";
+import axios from 'axios';
 import { fetchRSS, checkForUpdates } from "./lib/rssService.js";
 import parseRSS, { getNewPosts } from "./lib/parser/rssParser.js";
 
@@ -76,6 +76,38 @@ const app = () => {
     languageSwitcher: document.getElementById("language-switcher"),
     feedsContainer: null,
     postsContainer: null,
+    modal: null,
+    modalTitle: document.getElementById("modalLabel"),
+    modalBody: document.querySelector("#modal .modal-body"),
+    modalLink: document.getElementById("modal-link"),
+  };
+
+  // Инициализация модального окна
+  const initModal = () => {
+    const modalElement = document.getElementById("modal");
+    if (modalElement && typeof bootstrap !== "undefined") {
+      elements.modal = new bootstrap.Modal(modalElement);
+    }
+  };
+
+  // Открытие модального окна
+  const openPostModal = (post) => {
+    if (elements.modalTitle && elements.modalBody && elements.modalLink) {
+      elements.modalTitle.textContent = post.title;
+      elements.modalBody.innerHTML = post.description || "Нет содержимого";
+      elements.modalLink.href = post.link;
+      
+      // Помечаем пост как просмотренный
+      viewedPostIds.add(post.id);
+      
+      // Обновляем класс ссылки
+      const postLink = document.querySelector(`a[data-post-id="${post.id}"]`);
+      if (postLink) {
+        postLink.classList.add("fw-bold");
+      }
+      
+      elements.modal.show();
+    }
   };
 
   // Функция обновления всех RSS потоков
@@ -241,21 +273,7 @@ const app = () => {
     container.appendChild(list);
   };
 
-  // Открытие ссылки поста
-  const openPostLink = (post) => {
-    viewedPostIds.add(post.id);
-
-    const postLink = document.querySelector(`a[data-post-id="${post.id}"]`);
-    if (postLink) {
-      postLink.className = "fw-bold";
-    }
-
-    if (post.link && post.link !== "#") {
-      window.open(post.link, "_blank", "noopener,noreferrer");
-    }
-  };
-
-  // Рендер постов
+  // Рендер постов - ИСПРАВЛЕНО ДЛЯ ТЕСТОВ
   const renderPosts = () => {
     createContainers();
     const container = elements.postsContainer;
@@ -272,8 +290,9 @@ const app = () => {
     list.className = "list-group";
 
     posts.forEach((post) => {
+      const feed = feeds.find((f) => f.id === post.feedId);
       const isViewed = viewedPostIds.has(post.id);
-
+      
       const item = document.createElement("div");
       item.className = "list-group-item";
       item.dataset.postId = post.id;
@@ -283,18 +302,19 @@ const app = () => {
             <a href="${post.link}" 
                target="_blank" 
                rel="noopener noreferrer" 
-               class="fw-bold"
+               class="${isViewed ? 'fw-bold' : ''}"
                data-post-id="${post.id}">
               ${post.title}
             </a>
-            <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
-              ${t.viewButton}
-            </button>
-            <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
+            <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? '...' : '') : ''}</p>
+            <small class="text-muted">${feed ? feed.title : ''}</small>
           </div>
+          <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
+            ${t.viewButton}
+          </button>
         </div>
       `;
-
+      
       list.appendChild(item);
     });
 
@@ -302,25 +322,29 @@ const app = () => {
     container.appendChild(list);
 
     // Добавляем обработчики кликов на кнопки просмотра
-    container.querySelectorAll(".view-post-btn").forEach((button) => {
-      button.addEventListener("click", (e) => {
+    container.querySelectorAll('.view-post-btn').forEach(button => {
+      button.addEventListener('click', (e) => {
         e.preventDefault();
         const postId = e.currentTarget.dataset.postId;
-        const post = posts.find((p) => p.id === postId);
+        const post = posts.find(p => p.id === postId);
         if (post) {
-          openPostLink(post);
+          openPostModal(post);
         }
       });
     });
 
     // Добавляем обработчики кликов на ссылки
-    container.querySelectorAll("a[data-post-id]").forEach((link) => {
-      link.addEventListener("click", (e) => {
+    container.querySelectorAll('a[data-post-id]').forEach(link => {
+      link.addEventListener('click', (e) => {
         e.preventDefault();
         const postId = e.currentTarget.dataset.postId;
-        const post = posts.find((p) => p.id === postId);
+        const post = posts.find(p => p.id === postId);
         if (post) {
-          openPostLink(post);
+          viewedPostIds.add(postId);
+          e.currentTarget.classList.add('fw-bold');
+          if (post.link && post.link !== '#') {
+            window.open(post.link, '_blank', 'noopener,noreferrer');
+          }
         }
       });
     });
@@ -334,10 +358,9 @@ const app = () => {
     });
   }
 
-  // Инициализация UI
+  // Инициализация
+  initModal();
   updateUI();
-
-  // Запускаем автообновление
   scheduleNextUpdate();
 
   // Обработчик формы
@@ -409,31 +432,15 @@ const app = () => {
         let errorKey = "unknown";
         const errorMsg = error.message.toLowerCase();
 
-        if (
-          errorMsg.includes("network") ||
-          errorMsg.includes("timeout") ||
-          errorMsg.includes("notfound")
-        ) {
+        if (errorMsg.includes("network") || errorMsg.includes("timeout") || errorMsg.includes("notfound")) {
           errorKey = "network";
-        } else if (
-          errorMsg.includes("parse") ||
-          errorMsg.includes("nochannel")
-        ) {
+        } else if (errorMsg.includes("parse") || errorMsg.includes("nochannel")) {
           errorKey = "parse";
-        } else if (
-          errorMsg.includes("invalid") ||
-          errorMsg.includes("response")
-        ) {
+        } else if (errorMsg.includes("invalid") || errorMsg.includes("response")) {
           errorKey = "invalid";
-        } else if (
-          errorMsg.includes("duplicate") ||
-          errorMsg.includes("already exists")
-        ) {
+        } else if (errorMsg.includes("duplicate") || errorMsg.includes("already exists")) {
           errorKey = "duplicate";
-        } else if (
-          errorMsg.includes("required") ||
-          errorMsg.includes("empty")
-        ) {
+        } else if (errorMsg.includes("required") || errorMsg.includes("empty")) {
           errorKey = "required";
         } else if (errorMsg.includes("url") || errorMsg.includes("valid")) {
           errorKey = "url";
