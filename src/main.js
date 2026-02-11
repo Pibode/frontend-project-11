@@ -287,7 +287,7 @@ const app = () => {
     container.appendChild(list);
   };
 
-  // Рендер постов - ФИНАЛЬНАЯ ВЕРСИЯ (без названия фида)
+  // Рендер постов
   const renderPosts = () => {
     createContainers();
     const container = elements.postsContainer;
@@ -317,12 +317,11 @@ const app = () => {
                data-post-id="${post.id}">
               ${post.title}
             </a>
+            <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
+              ${t.viewButton}
+            </button>
             <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
-            <!-- НАЗВАНИЕ ФИДА УДАЛЕНО -->
           </div>
-          <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
-            ${t.viewButton}
-          </button>
         </div>
       `;
 
