@@ -287,7 +287,7 @@ const app = () => {
     container.appendChild(list);
   };
 
-  // Рендер постов
+  // Рендер постов - ФИНАЛЬНАЯ ВЕРСИЯ (без названия фида)
   const renderPosts = () => {
     createContainers();
     const container = elements.postsContainer;
@@ -304,8 +304,6 @@ const app = () => {
     list.className = "list-group";
 
     posts.forEach((post) => {
-      const feed = feeds.find((f) => f.id === post.feedId);
-
       const item = document.createElement("div");
       item.className = "list-group-item";
       item.dataset.postId = post.id;
@@ -320,7 +318,7 @@ const app = () => {
               ${post.title}
             </a>
             <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
-            <small class="text-muted">${feed ? feed.title : ""}</small>
+            <!-- НАЗВАНИЕ ФИДА УДАЛЕНО -->
           </div>
           <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
             ${t.viewButton}
