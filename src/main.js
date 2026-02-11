@@ -70,7 +70,7 @@ setTimeout(() => {
   }
 }, 100);
 const app = () => {
-  // Получаем элементы
+  // Получаем элементы.
   const elements = {
     appTitle: document.getElementById("app-title"),
     formLabel: document.getElementById("form-label"),
