@@ -333,8 +333,6 @@ const app = () => {
     list.className = "list-group";
 
     posts.forEach((post) => {
-      const isViewed = viewedPostIds.has(post.id);
-
       const item = document.createElement("div");
       item.className = "list-group-item";
       item.dataset.postId = post.id;
@@ -344,7 +342,7 @@ const app = () => {
             <a href="${post.link}" 
                target="_blank" 
                rel="noopener noreferrer" 
-               class="${isViewed ? "fw-bold" : ""}"
+               class="fw-bold"
                data-post-id="${post.id}">
               ${post.title}
             </a>
@@ -371,16 +369,6 @@ const app = () => {
         if (post) {
           openPostModal(post);
         }
-      });
-    });
-
-    // Добавляем обработчики кликов на ссылки постов
-    container.querySelectorAll("a[data-post-id]").forEach((link) => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        const postId = e.currentTarget.dataset.postId;
-        viewedPostIds.add(postId);
-        e.currentTarget.className = "fw-bold";
       });
     });
   };
