@@ -304,16 +304,13 @@ const app = () => {
 
   // Обновление статуса просмотра поста
   const updatePostViewStatus = (postId) => {
-    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-    if (postElement) {
-      const titleElement = postElement.querySelector(".post-title");
-      if (titleElement) {
-        titleElement.classList.add("fw-bold");
-      }
+    const postLink = document.querySelector(`a[data-post-id="${postId}"]`);
+    if (postLink) {
+      postLink.classList.add("fw-bold");
     }
   };
 
-  // Рендер постов - ИСПРАВЛЕНО (удалено отображение названия фида)
+  // Рендер постов - ИСПРАВЛЕНО для теста modal
   const renderPosts = () => {
     createContainers();
     const container = elements.postsContainer;
@@ -338,12 +335,14 @@ const app = () => {
       item.innerHTML = `
         <div class="d-flex w-100 justify-content-between align-items-start">
           <div class="me-3 flex-grow-1">
-            <a href="${post.link}" target="_blank" rel="noopener noreferrer" 
-               class="text-decoration-none post-title-link" data-post-id="${post.id}">
-              <h6 class="mb-1 post-title ${isViewed ? "fw-bold" : ""}">${post.title}</h6>
+            <a href="${post.link}" 
+               target="_blank" 
+               rel="noopener noreferrer" 
+               class="text-decoration-none post-link ${isViewed ? "fw-bold" : ""}"
+               data-post-id="${post.id}">
+              ${post.title}
             </a>
-            <p class="mb-1 small text-muted">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
-            <!-- НАЗВАНИЕ ФИДА УДАЛЕНО - остается только в списке фидов -->
+            <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
           </div>
           <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
             ${t.viewButton}
@@ -370,12 +369,12 @@ const app = () => {
     });
 
     // Добавляем обработчики кликов на ссылки постов
-    container.querySelectorAll(".post-title-link").forEach((link) => {
+    container.querySelectorAll(".post-link").forEach((link) => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
         const postId = e.currentTarget.dataset.postId;
         viewedPostIds.add(postId);
-        updatePostViewStatus(postId);
+        e.currentTarget.classList.add("fw-bold");
 
         // Открываем ссылку в новой вкладке
         const post = posts.find((p) => p.id === postId);
