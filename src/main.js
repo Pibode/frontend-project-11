@@ -287,35 +287,6 @@ const app = () => {
     container.appendChild(list);
   };
 
-  // Открытие модального окна с постом
-  const openPostModal = (post) => {
-    if (!elements.modal) {
-      createModal();
-    }
-
-    if (elements.modalTitle && elements.modalBody && elements.fullArticleBtn) {
-      elements.modalTitle.textContent = post.title;
-      elements.modalBody.innerHTML = post.description || "Нет содержимого";
-      elements.fullArticleBtn.href = post.link;
-
-      // Помечаем пост как просмотренный
-      viewedPostIds.add(post.id);
-
-      // Обновляем отображение поста - ЭТА СТРОКА ДОЛЖНА БЫТЬ
-      updatePostViewStatus(post.id);
-
-      elements.modal.show();
-    }
-  };
-
-  // Обновление статуса просмотра поста
-  const updatePostViewStatus = (postId) => {
-    const postLink = document.querySelector(`a[data-post-id="${postId}"]`);
-    if (postLink) {
-      postLink.className = "fw-bold";
-    }
-  };
-
   // Рендер постов
   const renderPosts = () => {
     createContainers();
@@ -333,6 +304,8 @@ const app = () => {
     list.className = "list-group";
 
     posts.forEach((post) => {
+      const feed = feeds.find((f) => f.id === post.feedId);
+
       const item = document.createElement("div");
       item.className = "list-group-item";
       item.dataset.postId = post.id;
@@ -347,6 +320,7 @@ const app = () => {
               ${post.title}
             </a>
             <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
+            <small class="text-muted">${feed ? feed.title : ""}</small>
           </div>
           <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
             ${t.viewButton}
