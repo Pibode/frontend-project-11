@@ -310,7 +310,7 @@ const app = () => {
     }
   };
 
-  // Рендер постов - ИСПРАВЛЕНО
+  // Рендер постов
   const renderPosts = () => {
     createContainers();
     const container = elements.postsContainer;
@@ -363,12 +363,20 @@ const app = () => {
         const postId = e.currentTarget.dataset.postId;
         const post = posts.find((p) => p.id === postId);
         if (post) {
+          // Добавляем класс fw-bold сразу при клике на кнопку
+          const postLink = document.querySelector(
+            `a[data-post-id="${postId}"]`,
+          );
+          if (postLink) {
+            postLink.className = "fw-bold";
+          }
+          viewedPostIds.add(postId);
           openPostModal(post);
         }
       });
     });
 
-    // Добавляем обработчики кликов на ссылки постов - ИСПРАВЛЕНО
+    // Добавляем обработчики кликов на ссылки постов
     container.querySelectorAll("a[data-post-id]").forEach((link) => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
