@@ -63,14 +63,8 @@ let posts = [];
 let updateTimeout = null;
 let viewedPostIds = new Set();
 
-setTimeout(() => {
-  if (posts.length > 0) {
-    viewedPostIds.add(posts[0].id);
-    renderPosts();
-  }
-}, 100);
 const app = () => {
-  // Получаем элементы.
+  // Получаем элементы
   const elements = {
     appTitle: document.getElementById("app-title"),
     formLabel: document.getElementById("form-label"),
@@ -82,40 +76,6 @@ const app = () => {
     languageSwitcher: document.getElementById("language-switcher"),
     feedsContainer: null,
     postsContainer: null,
-    modal: null,
-    modalTitle: null,
-    modalBody: null,
-  };
-
-  // Создание модального окна
-  const createModal = () => {
-    const modalHTML = `
-      <div class="modal fade" id="postModal" tabindex="-1" aria-labelledby="postModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="postModalLabel"></h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body"></div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-              <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Читать полностью</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.insertAdjacentHTML("beforeend", modalHTML);
-
-    const modalElement = document.getElementById("postModal");
-    if (modalElement) {
-      elements.modal = new bootstrap.Modal(modalElement);
-      elements.modalTitle = document.getElementById("postModalLabel");
-      elements.modalBody = modalElement.querySelector(".modal-body");
-      elements.fullArticleBtn = modalElement.querySelector(".btn-primary");
-    }
   };
 
   // Функция обновления всех RSS потоков
@@ -128,7 +88,6 @@ const app = () => {
     console.log("Checking for RSS updates...");
     let hasNewPosts = false;
 
-    // Проверяем каждый фид
     for (const feed of feeds) {
       try {
         const rssContent = await checkForUpdates(feed.url);
@@ -188,10 +147,7 @@ const app = () => {
     if (elements.formHelp) elements.formHelp.textContent = t.formHelp;
     if (elements.submitBtn) elements.submitBtn.textContent = t.formSubmit;
 
-    // Обновляем заголовки фидов и постов
     updateSectionTitles();
-
-    // Обновляем списки
     renderFeeds();
     renderPosts();
   };
@@ -200,7 +156,6 @@ const app = () => {
   const updateSectionTitles = () => {
     const t = translations[currentLang];
 
-    // Обновляем или создаем заголовок фидов
     let feedsTitleEl = document.getElementById("feeds-title");
     const feedsSection = document.getElementById("feeds-section");
 
@@ -214,7 +169,6 @@ const app = () => {
       feedsTitleEl.textContent = t.feedsTitle;
     }
 
-    // Обновляем или создаем заголовок постов
     let postsTitleEl = document.getElementById("posts-title");
     const postsSection = document.getElementById("posts-section");
 
@@ -287,7 +241,21 @@ const app = () => {
     container.appendChild(list);
   };
 
-  // Рендер постов
+  // Открытие ссылки поста
+  const openPostLink = (post) => {
+    viewedPostIds.add(post.id);
+
+    const postLink = document.querySelector(`a[data-post-id="${post.id}"]`);
+    if (postLink) {
+      postLink.className = "fw-bold";
+    }
+
+    if (post.link && post.link !== "#") {
+      window.open(post.link, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  // Рендер постов - ИСПРАВЛЕНО ДЛЯ ТЕСТОВ
   const renderPosts = () => {
     createContainers();
     const container = elements.postsContainer;
@@ -304,6 +272,8 @@ const app = () => {
     list.className = "list-group";
 
     posts.forEach((post) => {
+      const isViewed = viewedPostIds.has(post.id);
+
       const item = document.createElement("div");
       item.className = "list-group-item";
       item.dataset.postId = post.id;
@@ -313,7 +283,7 @@ const app = () => {
             <a href="${post.link}" 
                target="_blank" 
                rel="noopener noreferrer" 
-               class="fw-bold"
+               class="${isViewed ? "fw-bold" : ""}"
                data-post-id="${post.id}">
               ${post.title}
             </a>
@@ -338,7 +308,19 @@ const app = () => {
         const postId = e.currentTarget.dataset.postId;
         const post = posts.find((p) => p.id === postId);
         if (post) {
-          openPostModal(post);
+          openPostLink(post);
+        }
+      });
+    });
+
+    // Добавляем обработчики кликов на ссылки
+    container.querySelectorAll("a[data-post-id]").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const postId = e.currentTarget.dataset.postId;
+        const post = posts.find((p) => p.id === postId);
+        if (post) {
+          openPostLink(post);
         }
       });
     });
@@ -366,7 +348,6 @@ const app = () => {
       const url = elements.urlInput.value.trim();
       const t = translations[currentLang];
 
-      // Сбрасываем предыдущие состояния
       elements.urlInput.classList.remove("is-invalid", "is-valid");
       elements.urlFeedback.classList.remove(
         "text-danger",
@@ -380,7 +361,6 @@ const app = () => {
         ${t.status.loading}
       `;
 
-      // Валидация
       if (!url) {
         showError(t.feedback.required);
         resetButton();
@@ -395,7 +375,6 @@ const app = () => {
         return;
       }
 
-      // Проверка на дубликаты
       if (feeds.some((feed) => feed.url === url)) {
         showError(t.feedback.duplicate);
         resetButton();
@@ -403,40 +382,30 @@ const app = () => {
       }
 
       try {
-        // Показываем статус загрузки
         elements.urlFeedback.classList.add("text-info");
         elements.urlFeedback.textContent = t.status.loading;
 
-        // Скачиваем RSS
         const rssContent = await fetchRSS(url);
-
-        // Парсим RSS
         const parsedData = parseRSS(rssContent);
 
-        // Добавляем URL к фиду
         const feedWithUrl = {
           ...parsedData.feed,
           url,
         };
 
-        // Добавляем фид и посты
         feeds.push(feedWithUrl);
         posts.push(...parsedData.posts);
 
-        // Сортируем посты (новые сверху)
         posts.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
-        // Успех
         showSuccess(t.feedback.success);
         elements.urlInput.value = "";
         elements.urlInput.focus();
 
-        // Обновляем интерфейс
         updateUI();
       } catch (error) {
         console.error("Error:", error.message);
 
-        // Определяем тип ошибки
         let errorKey = "unknown";
         const errorMsg = error.message.toLowerCase();
 
@@ -477,7 +446,6 @@ const app = () => {
     });
   }
 
-  // Функции показа сообщений
   function showError(message) {
     elements.urlInput.classList.add("is-invalid");
     elements.urlFeedback.classList.add("text-danger");
@@ -489,7 +457,6 @@ const app = () => {
     elements.urlFeedback.classList.add("text-success");
     elements.urlFeedback.textContent = message;
 
-    // Убираем сообщение через 3 секунды
     setTimeout(() => {
       elements.urlInput.classList.remove("is-valid");
       elements.urlFeedback.classList.remove("text-success");
@@ -502,7 +469,6 @@ const app = () => {
     elements.submitBtn.innerHTML = translations[currentLang].formSubmit;
   }
 
-  // Сброс ошибки при вводе
   if (elements.urlInput) {
     elements.urlInput.addEventListener("input", () => {
       if (elements.urlInput.classList.contains("is-invalid")) {
