@@ -310,7 +310,7 @@ const app = () => {
     }
   };
 
-  // Рендер постов - ИСПРАВЛЕНО для теста modal
+  // Рендер постов
   const renderPosts = () => {
     createContainers();
     const container = elements.postsContainer;
@@ -327,6 +327,7 @@ const app = () => {
     list.className = "list-group";
 
     posts.forEach((post) => {
+      const feed = feeds.find((f) => f.id === post.feedId);
       const isViewed = viewedPostIds.has(post.id);
 
       const item = document.createElement("div");
@@ -338,11 +339,12 @@ const app = () => {
             <a href="${post.link}" 
                target="_blank" 
                rel="noopener noreferrer" 
-               class="text-decoration-none post-link ${isViewed ? "fw-bold" : ""}"
+               class="${isViewed ? "fw-bold" : ""}"
                data-post-id="${post.id}">
               ${post.title}
             </a>
             <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
+            <small class="text-muted">${feed ? feed.title : ""}</small>
           </div>
           <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
             ${t.viewButton}
@@ -369,18 +371,12 @@ const app = () => {
     });
 
     // Добавляем обработчики кликов на ссылки постов
-    container.querySelectorAll(".post-link").forEach((link) => {
+    container.querySelectorAll("a[data-post-id]").forEach((link) => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
         const postId = e.currentTarget.dataset.postId;
         viewedPostIds.add(postId);
-        e.currentTarget.classList.add("fw-bold");
-
-        // Открываем ссылку в новой вкладке
-        const post = posts.find((p) => p.id === postId);
-        if (post && post.link && post.link !== "#") {
-          window.open(post.link, "_blank", "noopener,noreferrer");
-        }
+        e.currentTarget.className = "fw-bold";
       });
     });
   };
