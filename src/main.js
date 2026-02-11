@@ -338,7 +338,7 @@ const app = () => {
             <a href="${post.link}" 
                target="_blank" 
                rel="noopener noreferrer" 
-               class="${isViewed ? "fw-bold" : ""}"
+               class="${isViewed ? "fw-bold" : "fw-normal"}"
                data-post-id="${post.id}">
               ${post.title}
             </a>
