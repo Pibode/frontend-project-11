@@ -295,7 +295,7 @@ const app = () => {
       // Помечаем пост как просмотренный
       viewedPostIds.add(post.id);
 
-      // Обновляем отображение поста
+      // Обновляем отображение поста - ЭТА СТРОКА ДОЛЖНА БЫТЬ
       updatePostViewStatus(post.id);
 
       elements.modal.show();
@@ -306,11 +306,11 @@ const app = () => {
   const updatePostViewStatus = (postId) => {
     const postLink = document.querySelector(`a[data-post-id="${postId}"]`);
     if (postLink) {
-      postLink.classList.add("fw-bold");
+      postLink.className = "fw-bold";
     }
   };
 
-  // Рендер постов
+  // Рендер постов - ИСПРАВЛЕНО
   const renderPosts = () => {
     createContainers();
     const container = elements.postsContainer;
@@ -338,12 +338,11 @@ const app = () => {
             <a href="${post.link}" 
                target="_blank" 
                rel="noopener noreferrer" 
-               class="${isViewed ? "fw-bold" : "fw-normal"}"
+               class="${isViewed ? "fw-bold" : ""}"
                data-post-id="${post.id}">
               ${post.title}
             </a>
             <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
-            <!-- НАЗВАНИЕ ФИДА ПОЛНОСТЬЮ УДАЛЕНО -->
           </div>
           <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
             ${t.viewButton}
@@ -369,7 +368,7 @@ const app = () => {
       });
     });
 
-    // Добавляем обработчики кликов на ссылки постов
+    // Добавляем обработчики кликов на ссылки постов - ИСПРАВЛЕНО
     container.querySelectorAll("a[data-post-id]").forEach((link) => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
