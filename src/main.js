@@ -336,12 +336,12 @@ const app = () => {
         <div class="d-flex w-100 justify-content-between align-items-start">
           <div class="me-3 flex-grow-1">
             <a href="${post.link}" 
-               target="_blank" 
-               rel="noopener noreferrer" 
-               class="${isViewed ? "fw-bold" : "fw-normal"}"
-               data-post-id="${post.id}">
-              ${post.title}
-            </a>
+   target="_blank" 
+   rel="noopener noreferrer" 
+   class="fw-bold"  // 
+   data-post-id="${post.id}">
+  ${post.title}
+</a>
             <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
           </div>
           <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
