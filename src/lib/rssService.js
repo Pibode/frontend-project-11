@@ -18,7 +18,6 @@ export const fetchRSS = async (url) => {
     }
 
     return response.data.contents;
-
   } catch (error) {
     if (error.code === 'ECONNABORTED') {
       throw new Error('networkError');
@@ -40,8 +39,7 @@ export const fetchRSS = async (url) => {
 export const checkForUpdates = async (url) => {
   try {
     return await fetchRSS(url);
-  } catch (error) {
-    console.warn(`Failed to check updates for ${url}:`, error.message);
+  } catch {
     return null;
   }
 };

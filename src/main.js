@@ -1,99 +1,97 @@
-import "./style.css";
-import axios from "axios";
-import { fetchRSS, checkForUpdates } from "./lib/rssService.js";
-import parseRSS, { getNewPosts } from "./lib/parser/rssParser.js";
+/* global bootstrap */
+import './style.css';
+import { fetchRSS, checkForUpdates } from './lib/rssService';
+import parseRSS, { getNewPosts } from './lib/parser/rssParser';
 
 // Простые переводы
 const translations = {
   ru: {
-    appTitle: "RSS агрегатор",
-    formLabel: "RSS ссылка",
-    formPlaceholder: "https://example.com/rss",
-    formHelp: "Пример: https://ru.hexlet.io/lessons.rss",
-    formSubmit: "Добавить",
-    feedsTitle: "Фиды",
-    postsTitle: "Посты",
-    feedsEmpty: "Пока нет фидов",
-    postsEmpty: "Пока нет постов",
+    appTitle: 'RSS агрегатор',
+    formLabel: 'RSS ссылка',
+    formPlaceholder: 'https://example.com/rss',
+    formHelp: 'Пример: https://ru.hexlet.io/lessons.rss',
+    formSubmit: 'Добавить',
+    feedsTitle: 'Фиды',
+    postsTitle: 'Посты',
+    feedsEmpty: 'Пока нет фидов',
+    postsEmpty: 'Пока нет постов',
     feedback: {
-      success: "RSS успешно загружен",
-      required: "Не должно быть пустым",
-      url: "Ссылка должна быть валидным URL",
-      duplicate: "RSS уже существует",
-      network: "Ошибка сети",
-      parse: "Ресурс не содержит валидный RSS",
-      invalid: "Ресурс не содержит валидный RSS",
-      unknown: "Неизвестная ошибка",
+      success: 'RSS успешно загружен',
+      required: 'Не должно быть пустым',
+      url: 'Ссылка должна быть валидным URL',
+      duplicate: 'RSS уже существует',
+      network: 'Ошибка сети',
+      parse: 'Ресурс не содержит валидный RSS',
+      invalid: 'Ресурс не содержит валидный RSS',
+      unknown: 'Неизвестная ошибка',
     },
     status: {
-      loading: "Загрузка...",
+      loading: 'Загрузка...',
     },
-    viewButton: "Просмотр",
+    viewButton: 'Просмотр',
   },
   en: {
-    appTitle: "RSS Aggregator",
-    formLabel: "RSS link",
-    formPlaceholder: "https://example.com/rss",
-    formHelp: "Example: https://ru.hexlet.io/lessons.rss",
-    formSubmit: "Add",
-    feedsTitle: "Feeds",
-    postsTitle: "Posts",
-    feedsEmpty: "No feeds yet",
-    postsEmpty: "No posts yet",
+    appTitle: 'RSS Aggregator',
+    formLabel: 'RSS link',
+    formPlaceholder: 'https://example.com/rss',
+    formHelp: 'Example: https://ru.hexlet.io/lessons.rss',
+    formSubmit: 'Add',
+    feedsTitle: 'Feeds',
+    postsTitle: 'Posts',
+    feedsEmpty: 'No feeds yet',
+    postsEmpty: 'No posts yet',
     feedback: {
-      success: "RSS successfully loaded",
-      required: "Should not be empty",
-      url: "Link must be a valid URL",
-      duplicate: "RSS already exists",
-      network: "Network error",
-      parse: "The resource does not contain valid RSS",
-      invalid: "The resource does not contain valid RSS",
-      unknown: "Unknown error",
+      success: 'RSS successfully loaded',
+      required: 'Should not be empty',
+      url: 'Link must be a valid URL',
+      duplicate: 'RSS already exists',
+      network: 'Network error',
+      parse: 'The resource does not contain valid RSS',
+      invalid: 'The resource does not contain valid RSS',
+      unknown: 'Unknown error',
     },
     status: {
-      loading: "Loading...",
+      loading: 'Loading...',
     },
-    viewButton: "View",
+    viewButton: 'View',
   },
 };
 
-let currentLang = "ru";
-let feeds = [];
-let posts = [];
+let currentLang = 'ru';
+const feeds = [];
+const posts = [];
 let updateTimeout = null;
-let viewedPostIds = new Set();
+const viewedPostIds = new Set();
 
 const app = () => {
   // Получаем элементы
   const elements = {
-    appTitle: document.getElementById("app-title"),
-    formLabel: document.getElementById("form-label"),
-    urlInput: document.getElementById("url-input"),
-    formHelp: document.getElementById("form-help"),
-    submitBtn: document.getElementById("submit-btn"),
-    urlFeedback: document.getElementById("url-feedback"),
-    rssForm: document.getElementById("rss-form"),
-    languageSwitcher: document.getElementById("language-switcher"),
+    appTitle: document.getElementById('app-title'),
+    formLabel: document.getElementById('form-label'),
+    urlInput: document.getElementById('url-input'),
+    formHelp: document.getElementById('form-help'),
+    submitBtn: document.getElementById('submit-btn'),
+    urlFeedback: document.getElementById('url-feedback'),
+    rssForm: document.getElementById('rss-form'),
+    languageSwitcher: document.getElementById('language-switcher'),
     feedsContainer: null,
     postsContainer: null,
     modal: null,
-    modalTitle: document.getElementById("postModalLabel"),
-    modalBody: document.querySelector("#postModal .modal-body"),
-    modalLink: document.getElementById("modal-link"),
+    modalTitle: document.getElementById('postModalLabel'),
+    modalBody: document.querySelector('#postModal .modal-body'),
+    modalLink: document.getElementById('modal-link'),
   };
 
   // Инициализация модального окна
   let lastViewedPostId = null;
   const initModal = () => {
-    const modalElement = document.getElementById("postModal");
-    if (modalElement && typeof bootstrap !== "undefined") {
+    const modalElement = document.getElementById('postModal');
+    if (modalElement && typeof bootstrap !== 'undefined') {
       elements.modal = new bootstrap.Modal(modalElement);
-      modalElement.addEventListener("hidden.bs.modal", () => {
+      modalElement.addEventListener('hidden.bs.modal', () => {
         if (lastViewedPostId) {
-          const link = document.querySelector(
-            `a[data-post-id="${lastViewedPostId}"]`,
-          );
-          if (link) link.classList.remove("fw-bold");
+          const link = document.querySelector(`a[data-post-id="${lastViewedPostId}"]`);
+          if (link) link.classList.remove('fw-bold');
           lastViewedPostId = null;
         }
       });
@@ -104,7 +102,7 @@ const app = () => {
   const openPostModal = (post) => {
     if (elements.modalTitle && elements.modalBody && elements.modalLink) {
       elements.modalTitle.textContent = post.title;
-      elements.modalBody.innerHTML = post.description || "Нет содержимого";
+      elements.modalBody.innerHTML = post.description || 'Нет содержимого';
       elements.modalLink.href = post.link;
 
       // Помечаем пост как просмотренный
@@ -114,112 +112,38 @@ const app = () => {
       // Обновляем класс ссылки (убирается при закрытии модалки)
       const postLink = document.querySelector(`a[data-post-id="${post.id}"]`);
       if (postLink) {
-        postLink.classList.add("fw-bold");
+        postLink.classList.add('fw-bold');
       }
 
       elements.modal.show();
     }
   };
 
-  // Функция обновления всех RSS потоков
-  const updateAllFeeds = async () => {
-    if (feeds.length === 0) {
-      scheduleNextUpdate();
-      return;
-    }
-
-    console.log("Checking for RSS updates...");
-    let hasNewPosts = false;
-
-    for (const feed of feeds) {
-      try {
-        const rssContent = await checkForUpdates(feed.url);
-        if (!rssContent) continue;
-
-        const parsedData = parseRSS(rssContent);
-        const newPosts = getNewPosts(parsedData, posts);
-
-        if (newPosts.length > 0) {
-          console.log(`Found ${newPosts.length} new posts in ${feed.title}`);
-
-          const postsWithFeedId = newPosts.map((post) => ({
-            ...post,
-            feedId: feed.id,
-          }));
-
-          posts.unshift(...postsWithFeedId);
-          hasNewPosts = true;
-        }
-      } catch (error) {
-        console.warn(`Error updating feed ${feed.url}:`, error.message);
-      }
-    }
-
-    if (hasNewPosts) {
-      posts.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
-      renderPosts();
-    }
-
-    scheduleNextUpdate();
-  };
-
-  // Функция планирования следующего обновления
-  const scheduleNextUpdate = () => {
-    if (updateTimeout) {
-      clearTimeout(updateTimeout);
-    }
-
-    updateTimeout = setTimeout(() => {
-      updateAllFeeds();
-    }, 5000);
-  };
-
-  // Функция обновления интерфейса
-  const updateUI = () => {
-    const t = translations[currentLang];
-
-    if (elements.appTitle) elements.appTitle.textContent = t.appTitle;
-    if (elements.formLabel) elements.formLabel.textContent = t.formLabel;
-    if (elements.urlInput) {
-      elements.urlInput.placeholder = t.formPlaceholder;
-      elements.urlInput.title =
-        currentLang === "ru"
-          ? "Пожалуйста, заполните это поле"
-          : "Please fill out this field";
-    }
-    if (elements.formHelp) elements.formHelp.textContent = t.formHelp;
-    if (elements.submitBtn) elements.submitBtn.textContent = t.formSubmit;
-
-    updateSectionTitles();
-    renderFeeds();
-    renderPosts();
-  };
-
   // Функция обновления заголовков разделов
   const updateSectionTitles = () => {
     const t = translations[currentLang];
 
-    let feedsTitleEl = document.getElementById("feeds-title");
-    const feedsSection = document.getElementById("feeds-section");
+    let feedsTitleEl = document.getElementById('feeds-title');
+    const feedsSection = document.getElementById('feeds-section');
 
     if (feedsSection) {
       if (!feedsTitleEl) {
-        feedsTitleEl = document.createElement("h3");
-        feedsTitleEl.className = "h5";
-        feedsTitleEl.id = "feeds-title";
+        feedsTitleEl = document.createElement('h3');
+        feedsTitleEl.className = 'h5';
+        feedsTitleEl.id = 'feeds-title';
         feedsSection.prepend(feedsTitleEl);
       }
       feedsTitleEl.textContent = t.feedsTitle;
     }
 
-    let postsTitleEl = document.getElementById("posts-title");
-    const postsSection = document.getElementById("posts-section");
+    let postsTitleEl = document.getElementById('posts-title');
+    const postsSection = document.getElementById('posts-section');
 
     if (postsSection) {
       if (!postsTitleEl) {
-        postsTitleEl = document.createElement("h3");
-        postsTitleEl.className = "h5";
-        postsTitleEl.id = "posts-title";
+        postsTitleEl = document.createElement('h3');
+        postsTitleEl.className = 'h5';
+        postsTitleEl.id = 'posts-title';
         postsSection.prepend(postsTitleEl);
       }
       postsTitleEl.textContent = t.postsTitle;
@@ -228,26 +152,26 @@ const app = () => {
 
   // Функция обновления контейнеров
   const createContainers = () => {
-    const feedsSection = document.getElementById("feeds-section");
-    const postsSection = document.getElementById("posts-section");
+    const feedsSection = document.getElementById('feeds-section');
+    const postsSection = document.getElementById('posts-section');
 
     if (feedsSection && !elements.feedsContainer) {
-      let container = document.getElementById("feeds-container");
+      let container = document.getElementById('feeds-container');
       if (!container) {
-        container = document.createElement("div");
-        container.id = "feeds-container";
-        container.className = "mt-3";
+        container = document.createElement('div');
+        container.id = 'feeds-container';
+        container.className = 'mt-3';
         feedsSection.appendChild(container);
       }
       elements.feedsContainer = container;
     }
 
     if (postsSection && !elements.postsContainer) {
-      let container = document.getElementById("posts-container");
+      let container = document.getElementById('posts-container');
       if (!container) {
-        container = document.createElement("div");
-        container.id = "posts-container";
-        container.className = "mt-3";
+        container = document.createElement('div');
+        container.id = 'posts-container';
+        container.className = 'mt-3';
         postsSection.appendChild(container);
       }
       elements.postsContainer = container;
@@ -267,12 +191,12 @@ const app = () => {
       return;
     }
 
-    const list = document.createElement("div");
-    list.className = "list-group";
+    const list = document.createElement('div');
+    list.className = 'list-group';
 
     feeds.forEach((feed) => {
-      const item = document.createElement("div");
-      item.className = "list-group-item";
+      const item = document.createElement('div');
+      item.className = 'list-group-item';
       item.innerHTML = `
         <h5 class="mb-1">${feed.title}</h5>
         <p class="mb-1 text-muted small">${feed.description}</p>
@@ -280,7 +204,7 @@ const app = () => {
       list.appendChild(item);
     });
 
-    container.innerHTML = "";
+    container.innerHTML = '';
     container.appendChild(list);
   };
 
@@ -297,12 +221,12 @@ const app = () => {
       return;
     }
 
-    const list = document.createElement("div");
-    list.className = "list-group";
+    const list = document.createElement('div');
+    list.className = 'list-group';
 
     posts.forEach((post) => {
-      const item = document.createElement("div");
-      item.className = "list-group-item";
+      const item = document.createElement('div');
+      item.className = 'list-group-item';
       item.dataset.postId = post.id;
       item.innerHTML = `
         <div class="d-flex w-100 justify-content-between align-items-start">
@@ -317,20 +241,20 @@ const app = () => {
             ${t.viewButton}
           </button>
         </div>
-        <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 50) + (post.description.length > 50 ? "..." : "") : ""}</p>
+        <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 50) + (post.description.length > 50 ? '...' : '') : ''}</p>
       `;
 
       list.appendChild(item);
     });
 
-    container.innerHTML = "";
+    container.innerHTML = '';
     container.appendChild(list);
 
     // Добавляем обработчики кликов на кнопки просмотра
-    container.querySelectorAll(".view-post-btn").forEach((button) => {
-      button.addEventListener("click", (e) => {
+    container.querySelectorAll('.view-post-btn').forEach((button) => {
+      button.addEventListener('click', (e) => {
         e.preventDefault();
-        const postId = e.currentTarget.dataset.postId;
+        const { postId } = e.currentTarget.dataset;
         const post = posts.find((p) => p.id === postId);
         if (post) {
           openPostModal(post);
@@ -339,9 +263,101 @@ const app = () => {
     });
   };
 
+  // Функция планирования следующего обновления
+  function scheduleNextUpdate() {
+    if (updateTimeout) {
+      clearTimeout(updateTimeout);
+    }
+
+    updateTimeout = setTimeout(() => {
+      // eslint-disable-next-line no-use-before-define -- circular with updateAllFeeds
+      updateAllFeeds();
+    }, 5000);
+  }
+
+  // Функция обновления всех RSS потоков
+  async function updateAllFeeds() {
+    if (feeds.length === 0) {
+      scheduleNextUpdate();
+      return;
+    }
+
+    const results = await Promise.all(
+      feeds.map(async (feed) => {
+        try {
+          const rssContent = await checkForUpdates(feed.url);
+          if (!rssContent) return null;
+          const parsedData = parseRSS(rssContent);
+          const newPosts = getNewPosts(parsedData, posts);
+          if (newPosts.length > 0) {
+            return { feed, newPosts };
+          }
+          return null;
+        } catch {
+          return null;
+        }
+      }),
+    );
+
+    const updates = results.filter((r) => r !== null);
+    if (updates.length > 0) {
+      updates.forEach(({ feed: f, newPosts: newP }) => {
+        const withFeedId = newP.map((post) => ({ ...post, feedId: f.id }));
+        posts.unshift(...withFeedId);
+      });
+      posts.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+      renderPosts();
+    }
+
+    scheduleNextUpdate();
+  }
+
+  // Функция обновления интерфейса
+  const updateUI = () => {
+    const t = translations[currentLang];
+
+    if (elements.appTitle) elements.appTitle.textContent = t.appTitle;
+    if (elements.formLabel) elements.formLabel.textContent = t.formLabel;
+    if (elements.urlInput) {
+      elements.urlInput.placeholder = t.formPlaceholder;
+      elements.urlInput.title = currentLang === 'ru'
+        ? 'Пожалуйста, заполните это поле'
+        : 'Please fill out this field';
+    }
+    if (elements.formHelp) elements.formHelp.textContent = t.formHelp;
+    if (elements.submitBtn) elements.submitBtn.textContent = t.formSubmit;
+
+    updateSectionTitles();
+    renderFeeds();
+    renderPosts();
+  };
+
+  const showError = (message) => {
+    elements.urlInput.classList.add('is-invalid');
+    elements.urlFeedback.classList.add('text-danger');
+    elements.urlFeedback.textContent = message;
+  };
+
+  const showSuccess = (message) => {
+    elements.urlInput.classList.add('is-valid');
+    elements.urlFeedback.classList.add('text-success');
+    elements.urlFeedback.textContent = message;
+
+    setTimeout(() => {
+      elements.urlInput.classList.remove('is-valid');
+      elements.urlFeedback.classList.remove('text-success');
+      elements.urlFeedback.textContent = '';
+    }, 3000);
+  };
+
+  const resetButton = () => {
+    elements.submitBtn.disabled = false;
+    elements.submitBtn.innerHTML = translations[currentLang].formSubmit;
+  };
+
   // Обработчик переключения языка
   if (elements.languageSwitcher) {
-    elements.languageSwitcher.addEventListener("change", (e) => {
+    elements.languageSwitcher.addEventListener('change', (e) => {
       currentLang = e.target.value;
       updateUI();
     });
@@ -354,19 +370,19 @@ const app = () => {
 
   // Обработчик формы
   if (elements.rssForm) {
-    elements.rssForm.addEventListener("submit", async (e) => {
+    elements.rssForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const url = elements.urlInput.value.trim();
       const t = translations[currentLang];
 
-      elements.urlInput.classList.remove("is-invalid", "is-valid");
+      elements.urlInput.classList.remove('is-invalid', 'is-valid');
       elements.urlFeedback.classList.remove(
-        "text-danger",
-        "text-success",
-        "text-info",
+        'text-danger',
+        'text-success',
+        'text-info',
       );
-      elements.urlFeedback.textContent = "";
+      elements.urlFeedback.textContent = '';
       elements.submitBtn.disabled = true;
       elements.submitBtn.innerHTML = `
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -380,6 +396,7 @@ const app = () => {
       }
 
       try {
+        // eslint-disable-next-line no-new -- validation only
         new URL(url);
       } catch {
         showError(t.feedback.url);
@@ -394,7 +411,7 @@ const app = () => {
       }
 
       try {
-        elements.urlFeedback.classList.add("text-info");
+        elements.urlFeedback.classList.add('text-info');
         elements.urlFeedback.textContent = t.status.loading;
 
         const rssContent = await fetchRSS(url);
@@ -411,44 +428,42 @@ const app = () => {
         posts.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
         showSuccess(t.feedback.success);
-        elements.urlInput.value = "";
+        elements.urlInput.value = '';
         elements.urlInput.focus();
 
         updateUI();
       } catch (error) {
-        console.error("Error:", error.message);
-
-        let errorKey = "unknown";
+        let errorKey = 'unknown';
         const errorMsg = error.message.toLowerCase();
 
         if (
-          errorMsg.includes("network") ||
-          errorMsg.includes("timeout") ||
-          errorMsg.includes("notfound")
+          errorMsg.includes('network')
+          || errorMsg.includes('timeout')
+          || errorMsg.includes('notfound')
         ) {
-          errorKey = "network";
+          errorKey = 'network';
         } else if (
-          errorMsg.includes("parse") ||
-          errorMsg.includes("nochannel")
+          errorMsg.includes('parse')
+          || errorMsg.includes('nochannel')
         ) {
-          errorKey = "parse";
+          errorKey = 'parse';
         } else if (
-          errorMsg.includes("invalid") ||
-          errorMsg.includes("response")
+          errorMsg.includes('invalid')
+          || errorMsg.includes('response')
         ) {
-          errorKey = "invalid";
+          errorKey = 'invalid';
         } else if (
-          errorMsg.includes("duplicate") ||
-          errorMsg.includes("already exists")
+          errorMsg.includes('duplicate')
+          || errorMsg.includes('already exists')
         ) {
-          errorKey = "duplicate";
+          errorKey = 'duplicate';
         } else if (
-          errorMsg.includes("required") ||
-          errorMsg.includes("empty")
+          errorMsg.includes('required')
+          || errorMsg.includes('empty')
         ) {
-          errorKey = "required";
-        } else if (errorMsg.includes("url") || errorMsg.includes("valid")) {
-          errorKey = "url";
+          errorKey = 'required';
+        } else if (errorMsg.includes('url') || errorMsg.includes('valid')) {
+          errorKey = 'url';
         }
 
         showError(t.feedback[errorKey]);
@@ -458,38 +473,15 @@ const app = () => {
     });
   }
 
-  function showError(message) {
-    elements.urlInput.classList.add("is-invalid");
-    elements.urlFeedback.classList.add("text-danger");
-    elements.urlFeedback.textContent = message;
-  }
-
-  function showSuccess(message) {
-    elements.urlInput.classList.add("is-valid");
-    elements.urlFeedback.classList.add("text-success");
-    elements.urlFeedback.textContent = message;
-
-    setTimeout(() => {
-      elements.urlInput.classList.remove("is-valid");
-      elements.urlFeedback.classList.remove("text-success");
-      elements.urlFeedback.textContent = "";
-    }, 3000);
-  }
-
-  function resetButton() {
-    elements.submitBtn.disabled = false;
-    elements.submitBtn.innerHTML = translations[currentLang].formSubmit;
-  }
-
   if (elements.urlInput) {
-    elements.urlInput.addEventListener("input", () => {
-      if (elements.urlInput.classList.contains("is-invalid")) {
-        elements.urlInput.classList.remove("is-invalid");
-        elements.urlFeedback.classList.remove("text-danger");
-        elements.urlFeedback.textContent = "";
+    elements.urlInput.addEventListener('input', () => {
+      if (elements.urlInput.classList.contains('is-invalid')) {
+        elements.urlInput.classList.remove('is-invalid');
+        elements.urlFeedback.classList.remove('text-danger');
+        elements.urlFeedback.textContent = '';
       }
     });
   }
 };
 
-document.addEventListener("DOMContentLoaded", app);
+document.addEventListener('DOMContentLoaded', app);
