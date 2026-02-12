@@ -273,7 +273,7 @@ const app = () => {
     container.appendChild(list);
   };
 
-  // Рендер постов
+  // Рендер постов - ИСПРАВЛЕНО (убрано название фида)
   const renderPosts = () => {
     createContainers();
     const container = elements.postsContainer;
@@ -290,7 +290,6 @@ const app = () => {
     list.className = "list-group";
 
     posts.forEach((post) => {
-      const feed = feeds.find((f) => f.id === post.feedId);
       const isViewed = viewedPostIds.has(post.id);
 
       const item = document.createElement("div");
@@ -307,7 +306,7 @@ const app = () => {
               ${post.title}
             </a>
             <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
-            <small class="text-muted">${feed ? feed.title : ""}</small>
+            <!-- НАЗВАНИЕ ФИДА УДАЛЕНО -->
           </div>
           <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
             ${t.viewButton}
@@ -340,7 +339,8 @@ const app = () => {
         const postId = e.currentTarget.dataset.postId;
         viewedPostIds.add(postId);
         e.currentTarget.className = "fw-bold";
-        if (post.link && post.link !== "#") {
+        const post = posts.find((p) => p.id === postId);
+        if (post && post.link && post.link !== "#") {
           window.open(post.link, "_blank", "noopener,noreferrer");
         }
       });
