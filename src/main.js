@@ -284,7 +284,7 @@ const app = () => {
     container.appendChild(list);
   };
 
-  // Рендер постов
+  // Рендер постов - ИСПРАВЛЕННАЯ СТРУКТУРА
   const renderPosts = () => {
     createContainers();
     const container = elements.postsContainer;
@@ -309,6 +309,7 @@ const app = () => {
           <a href="${post.link}" 
              target="_blank" 
              rel="noopener noreferrer" 
+             class="fw-bold"
              data-post-id="${post.id}">
             ${post.title}
           </a>
