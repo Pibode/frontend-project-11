@@ -77,14 +77,14 @@ const app = () => {
     feedsContainer: null,
     postsContainer: null,
     modal: null,
-    modalTitle: document.getElementById("modalLabel"),
-    modalBody: document.querySelector("#modal .modal-body"),
+    modalTitle: document.getElementById("postModalLabel"),
+    modalBody: document.querySelector("#postModal .modal-body"),
     modalLink: document.getElementById("modal-link"),
   };
 
   // Инициализация модального окна
   const initModal = () => {
-    const modalElement = document.getElementById("modal");
+    const modalElement = document.getElementById("postModal");
     if (modalElement && typeof bootstrap !== "undefined") {
       elements.modal = new bootstrap.Modal(modalElement);
     }
