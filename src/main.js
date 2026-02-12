@@ -306,7 +306,7 @@ const app = () => {
             ${t.viewButton}
           </button>
         </div>
-        <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
+       <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 50) + (post.description.length > 50 ? "..." : "") : ""}</p>
       `;
 
       list.appendChild(item);
