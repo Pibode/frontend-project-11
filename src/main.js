@@ -290,8 +290,6 @@ const app = () => {
     list.className = "list-group";
 
     posts.forEach((post) => {
-      const isViewed = viewedPostIds.has(post.id);
-
       const item = document.createElement("div");
       item.className = "list-group-item";
       item.dataset.postId = post.id;
@@ -301,7 +299,7 @@ const app = () => {
             <a href="${post.link}" 
                target="_blank" 
                rel="noopener noreferrer" 
-               class="${isViewed ? "fw-bold" : ""}"
+               class="fw-bold"
                data-post-id="${post.id}">
               ${post.title}
             </a>
@@ -319,7 +317,7 @@ const app = () => {
     container.innerHTML = "";
     container.appendChild(list);
 
-    // Добавляем обработчики кликов на кнопки просмотра
+    // Обработчики кликов на кнопки просмотра
     container.querySelectorAll(".view-post-btn").forEach((button) => {
       button.addEventListener("click", (e) => {
         e.preventDefault();
@@ -327,20 +325,6 @@ const app = () => {
         const post = posts.find((p) => p.id === postId);
         if (post) {
           openPostModal(post);
-        }
-      });
-    });
-
-    // Добавляем обработчики кликов на ссылки постов
-    container.querySelectorAll("a[data-post-id]").forEach((link) => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        const postId = e.currentTarget.dataset.postId;
-        viewedPostIds.add(postId);
-        e.currentTarget.className = "fw-bold";
-        const post = posts.find((p) => p.id === postId);
-        if (post && post.link && post.link !== "#") {
-          window.open(post.link, "_blank", "noopener,noreferrer");
         }
       });
     });
