@@ -83,10 +83,20 @@ const app = () => {
   };
 
   // Инициализация модального окна
+  let lastViewedPostId = null;
   const initModal = () => {
     const modalElement = document.getElementById("postModal");
     if (modalElement && typeof bootstrap !== "undefined") {
       elements.modal = new bootstrap.Modal(modalElement);
+      modalElement.addEventListener("hidden.bs.modal", () => {
+        if (lastViewedPostId) {
+          const link = document.querySelector(
+            `a[data-post-id="${lastViewedPostId}"]`,
+          );
+          if (link) link.classList.remove("fw-bold");
+          lastViewedPostId = null;
+        }
+      });
     }
   };
 
@@ -99,8 +109,9 @@ const app = () => {
 
       // Помечаем пост как просмотренный
       viewedPostIds.add(post.id);
+      lastViewedPostId = post.id;
 
-      // Обновляем класс ссылки
+      // Обновляем класс ссылки (убирается при закрытии модалки)
       const postLink = document.querySelector(`a[data-post-id="${post.id}"]`);
       if (postLink) {
         postLink.classList.add("fw-bold");
@@ -273,7 +284,7 @@ const app = () => {
     container.appendChild(list);
   };
 
-  // Рендер постов - ИСПРАВЛЕННАЯ СТРУКТУРА
+  // Рендер постов
   const renderPosts = () => {
     createContainers();
     const container = elements.postsContainer;
@@ -298,7 +309,6 @@ const app = () => {
           <a href="${post.link}" 
              target="_blank" 
              rel="noopener noreferrer" 
-             class="fw-bold"
              data-post-id="${post.id}">
             ${post.title}
           </a>
@@ -306,7 +316,7 @@ const app = () => {
             ${t.viewButton}
           </button>
         </div>
-       <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 50) + (post.description.length > 50 ? "..." : "") : ""}</p>
+        <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 50) + (post.description.length > 50 ? "..." : "") : ""}</p>
       `;
 
       list.appendChild(item);
