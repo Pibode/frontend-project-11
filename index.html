@@ -10,7 +10,6 @@
   <div class="container mt-5">
     <h1 class="text-center mb-4" id="app-title">RSS агрегатор</h1>
 
-    <!-- Переключатель языка -->
     <div class="text-end mb-3">
       <select class="form-select form-select-sm w-auto d-inline-block" id="language-switcher">
         <option value="ru" selected>Русский</option>
@@ -20,7 +19,6 @@
 
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8">
-        <!-- Форма -->
         <form id="rss-form" class="mb-4">
           <div class="mb-3">
             <label for="url-input" class="form-label" id="form-label">RSS ссылка</label>
@@ -31,6 +29,7 @@
                 id="url-input"
                 name="url"
                 placeholder="https://example.com/rss"
+                aria-label="url"
                 required
                 autofocus
                 title="Пожалуйста, заполните это поле"
@@ -40,18 +39,16 @@
               </button>
             </div>
             <div class="form-text" id="form-help">
-              Введите URL RSS-ленты
+              Пример: https://ru.hexlet.io/lessons.rss
             </div>
             <div class="form-text mt-1" id="url-feedback"></div>
           </div>
         </form>
 
-        <!-- Фиды -->
         <div id="feeds-section" class="mt-4">
           <div id="feeds-container" class="mt-3"></div>
         </div>
 
-        <!-- Посты -->
         <div id="posts-section" class="mt-4">
           <div id="posts-container" class="mt-3"></div>
         </div>
@@ -60,17 +57,17 @@
   </div>
 
   <!-- Модальное окно -->
-  <div class="modal fade" id="modal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+  <div class="modal fade" id="postModal" tabindex="-1" aria-labelledby="postModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="modalLabel"></h5>
+          <h5 class="modal-title" id="postModalLabel"></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body"></div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-          <a href="#" class="btn btn-primary" target="_blank" rel="noopener noreferrer" id="modal-link">Читать полностью</a>
+          <a href="#" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Читать полностью</a>
         </div>
       </div>
     </div>
