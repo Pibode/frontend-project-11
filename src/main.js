@@ -273,7 +273,7 @@ const app = () => {
     container.appendChild(list);
   };
 
-  // Рендер постов
+  // Рендер постов - ИСПРАВЛЕННАЯ СТРУКТУРА
   const renderPosts = () => {
     createContainers();
     const container = elements.postsContainer;
@@ -295,20 +295,18 @@ const app = () => {
       item.dataset.postId = post.id;
       item.innerHTML = `
         <div class="d-flex w-100 justify-content-between align-items-start">
-          <div class="me-3 flex-grow-1">
-            <a href="${post.link}" 
-               target="_blank" 
-               rel="noopener noreferrer" 
-               class="fw-bold"
-               data-post-id="${post.id}">
-              ${post.title}
-            </a>
-            <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
-          </div>
+          <a href="${post.link}" 
+             target="_blank" 
+             rel="noopener noreferrer" 
+             class="fw-bold"
+             data-post-id="${post.id}">
+            ${post.title}
+          </a>
           <button type="button" class="btn btn-outline-primary btn-sm view-post-btn" data-post-id="${post.id}">
             ${t.viewButton}
           </button>
         </div>
+        <p class="mb-1 small text-muted mt-1">${post.description ? post.description.substring(0, 150) + (post.description.length > 150 ? "..." : "") : ""}</p>
       `;
 
       list.appendChild(item);
@@ -317,7 +315,7 @@ const app = () => {
     container.innerHTML = "";
     container.appendChild(list);
 
-    // Обработчики кликов на кнопки просмотра
+    // Добавляем обработчики кликов на кнопки просмотра
     container.querySelectorAll(".view-post-btn").forEach((button) => {
       button.addEventListener("click", (e) => {
         e.preventDefault();
