@@ -1,6 +1,6 @@
-import js from "@eslint/js"
-import globals from "globals"
-import stylistic from "@stylistic/eslint-plugin"
+import js from "@eslint/js";
+import globals from "globals";
+import stylistic from "@stylistic/eslint-plugin";
 
 export default [
   {
@@ -29,6 +29,9 @@ export default [
       "@stylistic/padded-blocks": ["error", "never"],
       "@stylistic/no-multiple-empty-lines": ["error", { max: 1, maxEOF: 0 }],
       "@stylistic/no-trailing-spaces": "error",
+      "@stylistic/quotes": ["error", "single"],
+      "@stylistic/brace-style": ["error", "stroustrup"],
+      "@stylistic/operator-linebreak": ["error", "before"],
     },
   },
-]
+];
