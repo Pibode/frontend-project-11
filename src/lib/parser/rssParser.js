@@ -31,7 +31,7 @@ const parseRSS = (xmlString) => {
               'encoded',
             )
           }
- else if (namespace === 'dc') {
+          else if (namespace === 'dc') {
             elements = element.getElementsByTagNameNS(
               'http://purl.org/dc/elements/1.1/',
               tagName,
@@ -48,7 +48,7 @@ const parseRSS = (xmlString) => {
       const el = element.querySelector(selector)
       return el ? el.textContent.trim() : ''
     }
- catch {
+    catch {
       return ''
     }
   }

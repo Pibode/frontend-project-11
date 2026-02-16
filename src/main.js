@@ -296,7 +296,7 @@ const app = () => {
           }
           return null
         }
- catch {
+        catch {
           return null
         }
       }),
@@ -402,7 +402,7 @@ const app = () => {
         // eslint-disable-next-line no-new -- URL validation only
         new URL(url)
       }
- catch {
+      catch {
         showError(t.feedback.url)
         resetButton()
         return
@@ -437,7 +437,7 @@ const app = () => {
 
         updateUI()
       }
- catch (error) {
+      catch (error) {
         let errorKey = 'unknown'
         const errorMsg = error.message.toLowerCase()
 
@@ -448,37 +448,37 @@ const app = () => {
         ) {
           errorKey = 'network'
         }
- else if (
+        else if (
           errorMsg.includes('parse')
           || errorMsg.includes('nochannel')
         ) {
           errorKey = 'parse'
         }
- else if (
+        else if (
           errorMsg.includes('invalid')
           || errorMsg.includes('response')
         ) {
           errorKey = 'invalid'
         }
- else if (
+        else if (
           errorMsg.includes('duplicate')
           || errorMsg.includes('already exists')
         ) {
           errorKey = 'duplicate'
         }
- else if (
+        else if (
           errorMsg.includes('required')
           || errorMsg.includes('empty')
         ) {
           errorKey = 'required'
         }
- else if (errorMsg.includes('url') || errorMsg.includes('valid')) {
+        else if (errorMsg.includes('url') || errorMsg.includes('valid')) {
           errorKey = 'url'
         }
 
         showError(t.feedback[errorKey])
       }
- finally {
+      finally {
         resetButton()
       }
     })

@@ -32,6 +32,7 @@ export default [
       '@stylistic/quotes': ['error', 'single'],
       '@stylistic/brace-style': ['error', 'stroustrup'],
       '@stylistic/operator-linebreak': ['error', 'before'],
+      '@stylistic/indent': ['error', 2],
     },
   },
 ]
